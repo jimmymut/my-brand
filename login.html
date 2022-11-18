@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Admin login page</title>
+  </head>
+  <body>
+    <h1 class="login-header">Are you admin? Login here!</h1>
+    <div class="login-div">
+      <form id="login-form" action="#" method="post" onsubmit="return false">
+        <small id="loginIcorrectEmailError" class="contact-form-error"
+          >Email or password is incorrect!</small
+        >
+        <div>
+          <label for="loginEmail">Email</label><br />
+          <input
+            type="email"
+            id="loginEmail"
+            name="loginEmail"
+            placeholder="Enter your email"
+          />
+          <small id="loginEmailError" class="contact-form-error"
+            >Email can not be empty!</small
+          >
+          <small id="loginEmailValidateError" class="contact-form-error"
+            >Invalid email!</small
+          >
+        </div>
+        <div>
+          <label for="password">Password</label><br />
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="********"
+          />
+          <small id="loginPasswordError" class="contact-form-error passwor-err"
+            >Password can not be empty!</small
+          >
+        </div>
+        <a href="#">Forgot password?</a>
+        <button
+          onclick="return loginValidation();"
+          class="btn contact-btn"
+          type="submit"
+        >
+          <a href="./dashboard.html">Login</a>
+        </button>
+      </form>
+    </div>
+    <p class="login-header">
+      If you are not an admin, Go back <a href="./index.html">Home</a>
+    </p>
+    <script src="./index.js"></script>
+  </body>
+</html>

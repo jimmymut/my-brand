@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <title>Skills</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <nav>
+          <!-- <hr /> -->
+          <div class="navdiv">
+            <input type="checkbox" class="menu-toggler" />
+            <div class="humberger"></div>
+            <div class="menu-list">
+              <a href="./indax.html">Home</a
+              ><a href="./aboutme.html">About Me</a
+              ><a href="./contactme.html">Contact Me</a
+              ><a href="./skills.html">Skills</a
+              ><a href="./portfolio.html">Portfolio</a
+              ><a href="./blogs.html">Blogs</a>
+              <a href="./login.html">Admin</a>
+            </div>
+          </div>
+          <hr />
+        </nav>
+      </header>
+      <h1 id="skills-header">Technical Skills</h1>
+      <div class="technical-skills" id="skills-page1">
+        <div class="html-card">
+          <img src="./Images/html-icon.png" alt="html icon" />
+          <h4>HTML</h4>
+          <p>Very good at html structuring.</p>
+        </div>
+        <div class="css-card">
+          <img src="./Images/css-icon.png" alt="css icon" />
+          <h4>CSS</h4>
+          <p>
+            I am good css styling and keep on learning to keep my css tricks on
+            top level.
+          </p>
+        </div>
+        <div class="js-card">
+          <img src="./Images/javascript-icon.png" alt="JavaScript icon" />
+          <h4>JavaScript</h4>
+          <p>
+            Good in DOM manipulations and JavaScript in general for backend.
+          </p>
+        </div>
+        <img
+          class="nxt-btn"
+          onclick="return showNextSkill();"
+          src="./Images/icons8-next-page-48.png"
+          alt="Forward button"
+        />
+      </div>
+      <div class="technical-skills" id="skills-page2">
+        <!-- <h2>Technical Skills</h2> -->
+        <img
+          class="skill-one bck-btn"
+          onclick="return backToFirstSkill();"
+          src="./Images/icons8-next-page-49.png"
+          alt="backward button"
+        />
+        <div class="node-card">
+          <img src="./Images/icons8-nodejs-48.png" alt="node icon" />
+          <h4>Node.js</h4>
+          <p>I mostly use Node for backend development.</p>
+        </div>
+        <div class="express-card">
+          <img src="./Images/express-icon.png" alt="express icon" />
+          <h4>Express.js</h4>
+          <p>
+            I love Express Node framework, makes ease and faster for backend
+            development.
+          </p>
+        </div>
+        <div class="mongo-card">
+          <img src="./Images/mongodb-icon.png" alt="mongodb icon" />
+          <h4>mongoDB</h4>
+          <p>
+            I am good at using mongoDB atlas to connect with my application.
+          </p>
+        </div>
+        <img
+          class="nxt-btn"
+          onclick="return goToPage3Skill();"
+          src="./Images/icons8-next-page-48.png"
+          alt="Forward button"
+        />
+      </div>
+      <div class="technical-skills" id="skills-page3">
+        <!-- <h2>Technical Skills</h2> -->
+        <img
+          class="skill-one bck-btn"
+          onclick="return backToSecondSkill();"
+          src="./Images/icons8-next-page-49.png"
+          alt="backward button"
+        />
+        <div class="djongo-card">
+          <img src="./Images/django-icon.png" alt="django icon" />
+          <h4>Django</h4>
+          <p>I know basics of django, but am working hard to learn more.</p>
+        </div>
+        <div class="figma-card">
+          <img src="./Images/figma-icon.png" alt="figma icon" />
+          <h4>Figma</h4>
+          <p>I am good at working with figma and working hard to master it!</p>
+        </div>
+        <img
+          class="nxt-btn"
+          onclick="return goToPageFourSkill();"
+          src="./Images/icons8-next-page-48.png"
+          alt="Forward button"
+        />
+      </div>
+      <div class="main-softskills-div" id="skills-page4">
+        <h1 class="skills-header">Soft Skills</h1>
+        <div class="display-last-page">
+          <img
+            class="skill-one"
+            onclick="return backToThirdPageSkill();"
+            src="./Images/icons8-next-page-49.png"
+            alt="backward button"
+          />
+          <div class="soft-skills">
+            <ol>
+              <li>Communication</li>
+              <li>Teamwork</li>
+              <li>Technical writing</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+      <script src="./index.js"></script>
+    </main>
+  </body>
+</html>
