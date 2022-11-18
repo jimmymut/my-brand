@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <title>Dashboard</title>
+  </head>
+  <body>
+    <main class="dashboard-main">
+      <div class="leftdiv">
+        <div>
+          <img src="./Images/home-select.svg" alt="dashboard picture" />
+          <p>Dashboard</p>
+        </div>
+        <div>
+          <img src="./Images/blog.svg" alt="blog icon" />
+          <p>Blogs</p>
+        </div>
+        <div onclick="return showAllMessages();">
+          <img src="./Images/message.svg" alt="message icon" />
+          <p>Messages</p>
+        </div>
+        <div>
+          <img src="./Images/logout.svg" alt="logout icon" />
+          <p>Log Out</p>
+        </div>
+
+        <button
+          onclick="return displayAddArticleForm();"
+          id="left-div-btn-display"
+          class="left-div-btn"
+        >
+          <img src="./Images/add.svg" alt="Plus icon" /> New Post
+        </button>
+      </div>
+      <div class="rightdiv">
+        <h2>Dashboard</h2>
+        <div class="profile-pic-div">
+          <img src="./Images/profile.png" alt="profile" />
+          <p>Jimmy Mutabazi</p>
+        </div>
+        <div class="all-articles">
+          <ol>
+            <h2>Articles</h2>
+            <li>
+              <div class="artcle">
+                <p class="aticle-title">My journey into Tech</p>
+                <p>20/11/2022</p>
+                <div class="like-coment">
+                  <img
+                    class="bloglikeImage"
+                    src="./Images/Vector.svg"
+                    alt="likes icon"
+                  />
+                  <p class="number-oflikes">50</p>
+                </div>
+                <div class="like-coment">
+                  <img src="./Images/Vector (1).svg" alt="comments icon" />
+                  <p class="number-of-comments">50</p>
+                </div>
+                <img src="./Images/image 8.svg" alt="edit icon" />
+                <img src="./Images/image 9.svg" alt="delete icon" />
+              </div>
+            </li>
+            <li>
+              <div class="artcle">
+                <p class="aticle-title">Learning html</p>
+                <p>10/11/2022</p>
+                <div class="like-coment">
+                  <img src="./Images/Vector.svg" alt="likes icon" />
+                  <p>50</p>
+                </div>
+                <div class="like-coment">
+                  <img src="./Images/Vector (1).svg" alt="comments icon" />
+                  <p>50</p>
+                </div>
+                <img src="./Images/image 8.svg" alt="edit icon" />
+                <img src="./Images/image 9.svg" alt="delete icon" />
+              </div>
+            </li>
+            <li>
+              <div class="artcle">
+                <p class="aticle-title">Node vs Django</p>
+                <p>05/11/2022</p>
+                <div class="like-coment">
+                  <img src="./Images/Vector.svg" alt="likes icon" />
+                  <p>50</p>
+                </div>
+                <div class="like-coment">
+                  <img src="./Images/Vector (1).svg" alt="comments icon" />
+                  <p>50</p>
+                </div>
+                <img src="./Images/image 8.svg" alt="edit icon" />
+                <img src="./Images/image 9.svg" alt="delete icon" />
+              </div>
+            </li>
+          </ol>
+          <div id="all-messages">
+            <table>
+              <th>Name</th>
+
+              <th>Email</th>
+              <th>Message</th>
+              <th>Date</th>
+              <tr>
+                <td>Jean Musonera</td>
+                <td>jean@yahoo.rw</td>
+                <td>Your are good to go</td>
+                <td>10/09/2023</td>
+              </tr>
+              <tr>
+                <td>Jean Musonera</td>
+                <td>jean@yahoo.rw</td>
+                <td>Your are good to go</td>
+                <td>10/09/2023</td>
+              </tr>
+              <tr>
+                <td>Jean Musonera</td>
+                <td>jean@yahoo.rw</td>
+                <td>Your are good to go</td>
+                <td>10/09/2023</td>
+              </tr>
+              <tr>
+                <td>Jean Musonera</td>
+                <td>jean@yahoo.rw</td>
+                <td>Your are good to go</td>
+                <td>10/09/2023</td>
+              </tr>
+            </table>
+          </div>
+          <div class="add-article-form" id="add-article-dashbd-form">
+            <form action="#" method="post" onsubmit="return false;">
+              <h2>Add a new article here</h2>
+              <div>
+                <label for="title">Title</label><br />
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  placeholder="The title of the article"
+                  required
+                />
+              </div>
+              <div>
+                <label for="description">Description</label><br />
+                <textarea name="description" id="" cols="20" rows="4" required>
+    Write the description or the body of the article here</textarea
+                >
+                <div>
+                  <label for="file">Image</label><br />
+                  <input type="file" id="file" name="file" required />
+                </div>
+              </div>
+              <button
+                onclick="return disappearForm();"
+                id="add-article-btn"
+                class="btn contact-btn"
+                type="submit"
+              >
+                Add article
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <script src="./index.js"></script>
+    </main>
+  </body>
+</html>
