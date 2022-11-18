@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>User Sign up page</title>
+  </head>
+  <body>
+    <h1 class="login-header">Don't have an account? Create one!</h1>
+    <div class="login-div sign-up-form-div">
+      <div class="loader user-signup-loader"><strong>Loading...</strong></div>
+      <form
+        id="user-sign-up-form"
+        class="user-forms"
+        action="#"
+        method="post"
+        onsubmit="return false"
+      >
+        <div>
+          <label for="fusername">First Name</label><br />
+          <input
+            type="text"
+            id="fusername"
+            name="fusername"
+            placeholder="Enter your first name"
+          />
+          <small id="userfusernameError" class="contact-form-error"
+            >First name can not be empty!</small
+          >
+          <small id="userfusernameValidateError" class="contact-form-error"
+            >The name should be at least 3 characters!</small
+          >
+        </div>
+
+        <div>
+          <label for="lusername">Last Name</label><br />
+          <input
+            type="text"
+            id="lusername"
+            name="lusername"
+            placeholder="Enter your last name"
+          />
+          <small id="userlasNameError" class="contact-form-error"
+            >Last name can not be empty!</small
+          >
+          <small id="userlasNameValidateError" class="contact-form-error"
+            >The name should be at least 3 characters!</small
+          >
+        </div>
+
+        <div>
+          <label for="userEail">Email</label><br />
+          <input
+            type="email"
+            id="userEail"
+            name="email"
+            placeholder="Enter your email"
+          />
+          <small id="userEmailError" class="contact-form-error"
+            >Email can not be empty!</small
+          >
+          <small id="userEmailValidateError" class="contact-form-error"
+            >Invalid email!</small
+          >
+        </div>
+        <div>
+          <label for="userpass">Password</label><br />
+          <input
+            type="password"
+            id="userpass"
+            name="password"
+            placeholder="********"
+          />
+          <small id="userPasswordError" class="contact-form-error"
+            >Password can not be empty!</small
+          >
+          <small id="userPasswordLeng" class="contact-form-error"
+            >Password can should be at least 5 characters!</small
+          >
+        </div>
+        <div>
+          <label for="confuserpass">Comfirm Password</label><br />
+          <input
+            type="password"
+            id="confuserpass"
+            name="confuserpass"
+            placeholder="********"
+          />
+          <small id="userPasswordErrorconfir" class="contact-form-error"
+            >Password can not be empty!</small
+          >
+          <small id="userPasswordMismatch" class="contact-form-error"
+            >Passwords don't match!</small
+          >
+        </div>
+        <button
+          onclick="return userSignUpValidation();"
+          class="btn contact-btn"
+          type="submit"
+        >
+          Sign Up
+        </button>
+      </form>
+    </div>
+    <p class="login-header">
+      Already a user? <a href="./login.html">Login</a> or go
+      <a href="./index.html">Home</a>
+    </p>
+    <script src="./index.js"></script>
+  </body>
+</html>

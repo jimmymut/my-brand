@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"
+    />
+    <link rel="stylesheet" href="./style.css" />
+    <title>Blogs</title>
+  </head>
+  <body onload="createBlogSummary();">
+    <div class="loader dashboard-loader"><strong>Loading...</strong></div>
+    <main>
+      <header>
+        <nav>
+          <div class="navdiv">
+            <input type="checkbox" class="menu-toggler" />
+            <div class="humberger"></div>
+            <div class="menu-list">
+              <a href="./index.html">Home</a><a href="./aboutme.html">AboutMe</a
+              ><a href="./contactme.html">ContactMe</a
+              ><a href="./skills.html">Skills</a
+              ><a href="./portfolio.html">Portfolio</a
+              ><a href="./blogs.html">Blogs</a>
+              <a href="./userSignUp.html">SignUp</a>
+              <a href="./login.html">Login</a>
+              <a href="./adminSignUp.html">Admin</a>
+            </div>
+          </div>
+          <hr />
+        </nav>
+      </header>
+      <h1 class="blogs-summary-h1">
+        <b>Blogs</b>
+      </h1>
+      <div class="swiper mySwiper">
+        <div id="blog-summary-1" class="swiper-wrapper mainblog-summry"></div>
+        <div class="swiper-pagination"></div>
+      </div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-scrollbar"></div>
+      <script src="./index.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+      <script>
+        var swiper = new Swiper(".mySwiper", {
+          slidesPerView: 3,
+          spaceBetween: 0,
+          slidesPerGroup: 1,
+          loop: true,
+          loopFillGroupWithBlank: true,
+          pagination: {
+            el: ".swiper-pagination",
+            clickable: true,
+          },
+          navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+          },
+        });
+      </script>
+    </main>
+  </body>
+</html>

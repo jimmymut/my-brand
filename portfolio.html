@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="./style.css" />
+    <title>portfolio</title>
+  </head>
+  <body>
+    <div class="loader dashboard-loader"><strong>Loading...</strong></div>
+    <main>
+      <header>
+        <nav>
+          <div class="navdiv">
+            <input type="checkbox" class="menu-toggler" />
+            <div class="humberger"></div>
+            <div class="menu-list">
+              <a href="./index.html">Home</a><a href="./aboutme.html">AboutMe</a
+              ><a href="./contactme.html">ContactMe</a
+              ><a href="./skills.html">Skills</a
+              ><a href="./portfolio.html">Portfolio</a
+              ><a href="./blogs.html">Blogs</a>
+              <a href="./userSignUp.html">SignUp</a>
+              <a href="./login.html">Login</a>
+              <a href="./adminSignUp.html">Admin</a>
+            </div>
+          </div>
+          <hr />
+        </nav>
+      </header>
+      <h1 class="skills-header">The work I have done so far!</h1>
+      <div class="portfolio-ol">
+        <div class="list1">
+          <div class="work-done">
+            <h3>1. Andela Technical Leadership program (ATLP).</h3>
+            <br />
+            <p>
+              This is an intense program that is designed to accelelate full
+              stack software development career where they equip with the
+              necessary knowlege and skills to excel in this career for nine
+              months. At the very beginning I designed and developed this
+              website.
+            </p>
+          </div>
+        </div>
+        <div class="list1">
+          <div class="work-done">
+            <h3>2. Laptop4developers program by DevCareerAfrica</h3>
+            <br />
+            <p>
+              This is a three months intense program designed like internship
+              that prepare you to a work ready person in softwere development
+              and gives access
+              <a class="portfolio-link" href="www.educative.io"
+                >educative.io.</a
+              >
+              Here I did backend development with Node.js, express and mongoDB,
+              Rest API development and documentation on postman and how to
+              interact with third party APIs.
+            </p>
+          </div>
+        </div>
+        <div class="list1">
+          <div class="work-done">
+            <h3>3. I4GxZuri-Training program</h3>
+            <br />
+            <p>
+              A three months software development training program that is
+              designed for beginners where participants who perform to meet a
+              minimum score to be issued a certificate and assigned to a project
+              phase to work on a real world project in a team. This helps to
+              acquiring collaboration skills. Here I did full stack where we
+              learnt basics of html, css and JavaScript for frontend part and
+              python with django for backend.
+            </p>
+          </div>
+        </div>
+        <img
+          class="list1 nxt-btn"
+          onclick="return goToPortfolio2();"
+          src="./Images/icons8-next-page-48.png"
+          alt="next button"
+        />
+
+        <div class="list2">
+          <div class="work-done">
+            <h3>4. Academic internship at Saltel Rwanda</h3>
+            <br />
+            <p>
+              This was a 10 weeks University internship as an Electronics and
+              Telecommunications Engineering student where we learnt computer
+              maintainence both hardware by disassembling and assembling a
+              computer to inspect it's working condition, software by formating
+              a pc or resettig it. LAN installation where we learnt basics of
+              network and network layers and building a functional LAN.
+            </p>
+          </div>
+        </div>
+        <div class="list2">
+          <div class="work-done">
+            <h3>5. School laboratory management</h3>
+            <br />
+            <p>
+              While at my A'level studies, I use to assist in our school
+              labolatory which give me a chance be the person in charge
+              immediately after my high school studies, where I used to manage
+              all school laboratories which incresed my leadership skills and
+              management skills.
+            </p>
+          </div>
+        </div>
+        <img
+          class="list2 bck-btn"
+          onclick="return backToPortfolio1();"
+          src="./Images/icons8-next-page-49.png"
+          alt="back button"
+        />
+      </div>
+      <script src="./index.js"></script>
+    </main>
+  </body>
+</html>
