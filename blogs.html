@@ -4,10 +4,14 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.css"
+    />
     <link rel="stylesheet" href="./style.css" />
     <title>Blogs</title>
   </head>
-  <body>
+  <body onload="createBlogSummary();">
     <main>
       <header>
         <nav>
@@ -16,7 +20,7 @@
             <input type="checkbox" class="menu-toggler" />
             <div class="humberger"></div>
             <div class="menu-list">
-              <a href="./landing.html">Home</a
+              <a href="./index.html">Home</a
               ><a href="./aboutme.html">About Me</a
               ><a href="./contactme.html">Contact Me</a
               ><a href="./skills.html">Skills</a
@@ -31,166 +35,32 @@
       <h1 class="blogs-summary-h1">
         <b>Blogs</b>
       </h1>
-      <div id="blog-summary-1" class="mainblog-summry">
-        <div class="blog-summary-div">
-          <img src="./Images/tech photo 1.png" alt="writing codes" />
-          <div class="artcle blog-summury-lc">
-            <div class="like-coment">
-              <img
-                class="bloglikeImage"
-                onclick="return likesfunction();"
-                src="./Images/Vector.svg"
-                alt="likes icon"
-              />
-              <p class="number-oflikes">50</p>
-            </div>
-            <div class="like-coment">
-              <img src="./Images/Vector (1).svg" alt="comments icon" />
-              <p class="number-of-comments">50</p>
-            </div>
-          </div>
-          <div class="blog-sum-title">
-            <h3>My journey into Tech</h3>
-            <p>20/11/2022</p>
-          </div>
-          <p class="article-summury">
-            When I was at the University, we learnt a little a bit of coding
-            with c and cpp, and did introduction to mobile application in the
-            final ye...
-          </p>
-          <a href="./blogOne.html" target="_blank">Read More</a>
-        </div>
-        <div class="blog-summary-div">
-          <img src="./Images/tech photo 1.png" alt="writing codes" />
-          <div class="artcle blog-summury-lc">
-            <div class="like-coment">
-              <img src="./Images/Vector.svg" alt="likes icon" />
-              <p>50</p>
-            </div>
-            <div class="like-coment">
-              <img src="./Images/Vector (1).svg" alt="comments icon" />
-              <p>50</p>
-            </div>
-          </div>
-          <div class="blog-sum-title">
-            <h3>My journey into Tech</h3>
-            <p>20/11/2022</p>
-          </div>
-          <p class="article-summury">
-            When I was at the University, we learnt a little a bit of coding
-            with c and cpp, and did introduction to mobile application in the
-            final ye...
-          </p>
-          <a href="./blogOne.html" target="_blank">Read More</a>
-        </div>
-        <div class="blog-summary-div">
-          <img src="./Images/tech photo 1.png" alt="writing codes" />
-          <div class="artcle blog-summury-lc">
-            <div class="like-coment">
-              <img src="./Images/Vector.svg" alt="likes icon" />
-              <p>50</p>
-            </div>
-            <div class="like-coment">
-              <img src="./Images/Vector (1).svg" alt="comments icon" />
-              <p>50</p>
-            </div>
-          </div>
-          <div class="blog-sum-title">
-            <h3>My journey into Tech</h3>
-            <p>20/11/2022</p>
-          </div>
-          <p class="article-summury">
-            When I was at the University, we learnt a little a bit of coding
-            with c and cpp, and did introduction to mobile application in the
-            final ye...
-          </p>
-          <a href="./blogOne.html" target="_blank">Read More</a>
-        </div>
-        <img
-          class="nxt-btn"
-          onclick="return showBlogTwo();"
-          src="./Images/icons8-next-page-48.png"
-          alt="Next page"
-        />
+      <div class="swiper mySwiper">
+        <div id="blog-summary-1" class="swiper-wrapper mainblog-summry"></div>
+        <div class="swiper-pagination"></div>
       </div>
-      <div id="blog-summary-2" class="mainblog-summry">
-        <img
-          class="back-blog-summur bck-btn"
-          onclick="return showBlogOne();"
-          src="./Images/icons8-next-page-49.png"
-          alt="previos page"
-        />
-        <div class="blog-summary-div">
-          <img src="./Images/tech photo 1.png" alt="writing codes" />
-          <div class="artcle blog-summury-lc">
-            <div class="like-coment">
-              <img src="./Images/Vector.svg" alt="likes icon" />
-              <p>50</p>
-            </div>
-            <div class="like-coment">
-              <img src="./Images/Vector (1).svg" alt="comments icon" />
-              <p>50</p>
-            </div>
-          </div>
-          <div class="blog-sum-title">
-            <h3>My journey into Tech</h3>
-            <p>20/11/2022</p>
-          </div>
-          <p class="article-summury">
-            When I was at the University, we learnt a little a bit of coding
-            with c and cpp, and did introduction to mobile application in the
-            final ye...
-          </p>
-          <a href="./blogOne.html" target="_blank">Read More</a>
-        </div>
-        <div class="blog-summary-div">
-          <img src="./Images/tech photo 1.png" alt="writing codes" />
-          <div class="artcle blog-summury-lc">
-            <div class="like-coment">
-              <img src="./Images/Vector.svg" alt="likes icon" />
-              <p>50</p>
-            </div>
-            <div class="like-coment">
-              <img src="./Images/Vector (1).svg" alt="comments icon" />
-              <p>50</p>
-            </div>
-          </div>
-          <div class="blog-sum-title">
-            <h3>My journey into Tech</h3>
-            <p>20/11/2022</p>
-          </div>
-          <p class="article-summury">
-            When I was at the University, we learnt a little a bit of coding
-            with c and cpp, and did introduction to mobile application in the
-            final ye...
-          </p>
-          <a href="./blogOne.html" target="_blank">Read More</a>
-        </div>
-        <div class="blog-summary-div">
-          <img src="./Images/tech photo 1.png" alt="writing codes" />
-          <div class="artcle blog-summury-lc">
-            <div class="like-coment">
-              <img src="./Images/Vector.svg" alt="likes icon" />
-              <p>50</p>
-            </div>
-            <div class="like-coment">
-              <img src="./Images/Vector (1).svg" alt="comments icon" />
-              <p>50</p>
-            </div>
-          </div>
-          <div class="blog-sum-title">
-            <h3>My journey into Tech</h3>
-            <p>20/11/2022</p>
-          </div>
-          <p class="article-summury">
-            When I was at the University, we learnt a little a bit of coding
-            with c and cpp, and did introduction to mobile application in the
-            final ye...
-          </p>
-          <a href="./blogOne.html" target="_blank">Read More</a>
-        </div>
-      </div>
+      <div class="swiper-button-prev"></div>
+      <div class="swiper-button-next"></div>
+      <div class="swiper-scrollbar"></div>
       <script src="./index.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/swiper/swiper-bundle.min.js"></script>
+      <script>
+        var swiper = new Swiper(".mySwiper", {
+          slidesPerView: 3,
+          spaceBetween: 30,
+          slidesPerGroup: 3,
+          loop: true,
+          loopFillGroupWithBlank: true,
+          pagination: {
+            el: ".swiper-pagination",
+            clickable: true,
+          },
+          navigation: {
+            nextEl: ".swiper-button-next",
+            prevEl: ".swiper-button-prev",
+          },
+        });
+      </script>
     </main>
   </body>
 </html>

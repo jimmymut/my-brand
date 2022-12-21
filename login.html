@@ -10,7 +10,10 @@
   <body>
     <h1 class="login-header">Are you admin? Login here!</h1>
     <div class="login-div">
-      <form id="login-form" action="#" method="post">
+      <form id="login-form" action="#" method="post" onsubmit="return false">
+        <small id="loginIcorrectEmailError" class="contact-form-error"
+          >Email or password is incorrect!</small
+        >
         <div>
           <label for="loginEmail">Email</label><br />
           <input
@@ -21,6 +24,9 @@
           />
           <small id="loginEmailError" class="contact-form-error"
             >Email can not be empty!</small
+          >
+          <small id="loginEmailValidateError" class="contact-form-error"
+            >Invalid email!</small
           >
         </div>
         <div>
@@ -36,13 +42,17 @@
           >
         </div>
         <a href="#">Forgot password?</a>
-        <button class="btn contact-btn" type="submit">
+        <button
+          onclick="return loginValidation();"
+          class="btn contact-btn"
+          type="submit"
+        >
           <a href="./dashboard.html">Login</a>
         </button>
       </form>
     </div>
     <p class="login-header">
-      If you are not an admin, Go back <a href="./landing.html">Home</a>
+      If you are not an admin, Go back <a href="./index.html">Home</a>
     </p>
     <script src="./index.js"></script>
   </body>

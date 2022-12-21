@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="./style.css" />
     <title>Blog post</title>
   </head>
-  <body>
+  <body onload="loadFullBlog();">
     <main>
       <header>
         <nav>
@@ -15,8 +15,8 @@
           <div class="navdiv">
             <input type="checkbox" class="menu-toggler" />
             <div class="humberger"></div>
-            <div class="menu-list">
-              <a href="./landing.html">Home</a
+            <div class="menu-list"
+              <a href="./index.html">Home</a
               ><a href="./aboutme.html">About Me</a
               ><a href="./contactme.html">Contact Me</a
               ><a href="./skills.html">Skills</a
@@ -30,98 +30,6 @@
       </header>
       <div class="blogpost-div">
         <h1 class="blog-header">Blog Post</h1>
-        <h2>My journey into Tech</h2>
-        <p class="blogpost-time">Updated 20/11/2022</p>
-        <img class="blogpost-image" src="./Images/tech photo.jpg" alt="" />
-        <p class="blog-content">
-          When I was at the University, we learnt a little a bit of coding with
-          c and cpp, and did introduction to mobile application in the final
-          year and kept to feel enjoyng coding, Then after I got an oportunity
-          to join I4GxZuri-Training program, due to the thirsity of knowing what
-          happens in tech, I chose a full stack track and I was a complete
-          beginner I can call it newbie myself, In that program I really enjoyed
-          evenif I used to spend a lot of my time on the tasks but I got usefull
-          insights on the career and then decided to look for more opportunities
-          to keep advancing in what i sarted and then here I am at Andela
-          Technicla Leadership Program wich is the best program that trainsat a
-          proffessional level.
-        </p>
-        <div class="like-coment post-like-commet">
-          <img
-            class="bloglikeImage"
-            onclick="return likesfunction();"
-            src="./Images/Vector.svg"
-            alt="likes icon"
-          />
-          <p class="number-oflikes">50</p>
-        </div>
-        <div class="like-coment post-like-commet">
-          <img src="./Images/Vector (1).svg" alt="comments icon" />
-          <p class="number-of-comments">5</p>
-        </div>
-        <div class="all-blog-comments">
-          <h3>Comments</h3>
-          <ol>
-            <li>
-              <h5>Happy Junior</h5>
-              <p>20/11/2022</p>
-              <small>Wow it is owesome strory, you are welcome in Tech</small>
-            </li>
-            <li>
-              <h5>Happy Junior</h5>
-              <p>20/11/2022</p>
-              <small>Wow it is owesome strory, you are welcome in Tech</small>
-            </li>
-            <div id="load-more-comments">
-              <li>
-                <h5>Happy Junior</h5>
-                <p>20/11/2022</p>
-                <small>Wow it is owesome strory, you are welcome in Tech</small>
-              </li>
-              <li>
-                <h5>Happy Junior</h5>
-                <p>20/11/2022</p>
-                <small>Wow it is owesome strory, you are welcome in Tech</small>
-              </li>
-              <li>
-                <h5>Happy Junior</h5>
-                <p>20/11/2022</p>
-                <small>Wow it is owesome strory, you are welcome in Tech</small>
-              </li>
-            </div>
-            <button id="load-all-cmts" onclick="return showAllComments();">
-              All comments
-            </button>
-          </ol>
-        </div>
-
-        <form
-          action="#"
-          method="post"
-          onsubmit="return false"
-          id="blogC0mmentField"
-        >
-          <label for="name">Name: </label>
-          <input
-            type="text"
-            name="name"
-            id="name"
-            placeholder="Full name"
-          /><br />
-          <small id="cmt-form-name-verify">Please fill in thes field</small>
-          <textarea
-            id="comment"
-            name="comment"
-            placeholder="Add your comment"
-            required
-          ></textarea>
-          <br />
-          <small id="cmt-form-comment-verify">Please fill in thes field</small>
-          <br />
-          <button id="blog-comt" onclick="return countComments();">
-            Add comment
-          </button>
-        </form>
       </div>
       <script src="./index.js"></script>
     </main>

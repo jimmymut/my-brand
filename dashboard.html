@@ -7,25 +7,38 @@
     <link rel="stylesheet" href="./style.css" />
     <title>Dashboard</title>
   </head>
-  <body>
+  <div class="navdiv">
+    <div class="menu-list"></div>
+  </div>
+  <body id="dashbod-body-tag" onload="loadDashboardDymanicContent();">
     <main class="dashboard-main">
+      <input type="checkbox" class="menu-toggler dashtogler" />
+      <div class="humberger dashboard-hamberger"></div>
       <div class="leftdiv">
-        <div>
-          <img src="./Images/home-select.svg" alt="dashboard picture" />
-          <p>Dashboard</p>
-        </div>
-        <div>
-          <img src="./Images/blog.svg" alt="blog icon" />
-          <p>Blogs</p>
-        </div>
-        <div onclick="return showAllMessages();">
-          <img src="./Images/message.svg" alt="message icon" />
-          <p>Messages</p>
-        </div>
-        <div>
-          <img src="./Images/logout.svg" alt="logout icon" />
-          <p>Log Out</p>
-        </div>
+        <a href="#">
+          <div>
+            <img src="./Images/home-select.svg" alt="dashboard picture" />
+            <p>Dashboard</p>
+          </div>
+        </a>
+        <a href="#dashboard-all-articles">
+          <div>
+            <img src="./Images/blog.svg" alt="blog icon" />
+            <p>Blogs</p>
+          </div>
+        </a>
+        <a href="#">
+          <div onclick="return showAllMessages();">
+            <img src="./Images/message.svg" alt="message icon" />
+            <p>Messages</p>
+          </div>
+        </a>
+        <a class="logOut-a-tag" type="button" href="./index.html">
+          <div>
+            <img src="./Images/logout.svg" alt="logout icon" />
+            <p>Log Out</p>
+          </div>
+        </a>
 
         <button
           onclick="return displayAddArticleForm();"
@@ -36,102 +49,23 @@
         </button>
       </div>
       <div class="rightdiv">
-        <h2>Dashboard</h2>
+        <h2 class="dash-heading">Dashboard</h2>
         <div class="profile-pic-div">
           <img src="./Images/profile.png" alt="profile" />
           <p>Jimmy Mutabazi</p>
         </div>
-        <div class="all-articles">
-          <ol>
+        <div class="all-articles" id="dashboard-all-articles">
+          <ol id="dashOrderedList">
             <h2>Articles</h2>
-            <li>
-              <div class="artcle">
-                <p class="aticle-title">My journey into Tech</p>
-                <p>20/11/2022</p>
-                <div class="like-coment">
-                  <img
-                    class="bloglikeImage"
-                    src="./Images/Vector.svg"
-                    alt="likes icon"
-                  />
-                  <p class="number-oflikes">50</p>
-                </div>
-                <div class="like-coment">
-                  <img src="./Images/Vector (1).svg" alt="comments icon" />
-                  <p class="number-of-comments">50</p>
-                </div>
-                <img src="./Images/image 8.svg" alt="edit icon" />
-                <img src="./Images/image 9.svg" alt="delete icon" />
-              </div>
-            </li>
-            <li>
-              <div class="artcle">
-                <p class="aticle-title">Learning html</p>
-                <p>10/11/2022</p>
-                <div class="like-coment">
-                  <img src="./Images/Vector.svg" alt="likes icon" />
-                  <p>50</p>
-                </div>
-                <div class="like-coment">
-                  <img src="./Images/Vector (1).svg" alt="comments icon" />
-                  <p>50</p>
-                </div>
-                <img src="./Images/image 8.svg" alt="edit icon" />
-                <img src="./Images/image 9.svg" alt="delete icon" />
-              </div>
-            </li>
-            <li>
-              <div class="artcle">
-                <p class="aticle-title">Node vs Django</p>
-                <p>05/11/2022</p>
-                <div class="like-coment">
-                  <img src="./Images/Vector.svg" alt="likes icon" />
-                  <p>50</p>
-                </div>
-                <div class="like-coment">
-                  <img src="./Images/Vector (1).svg" alt="comments icon" />
-                  <p>50</p>
-                </div>
-                <img src="./Images/image 8.svg" alt="edit icon" />
-                <img src="./Images/image 9.svg" alt="delete icon" />
-              </div>
-            </li>
           </ol>
-          <div id="all-messages">
-            <table>
-              <th>Name</th>
-
-              <th>Email</th>
-              <th>Message</th>
-              <th>Date</th>
-              <tr>
-                <td>Jean Musonera</td>
-                <td>jean@yahoo.rw</td>
-                <td>Your are good to go</td>
-                <td>10/09/2023</td>
-              </tr>
-              <tr>
-                <td>Jean Musonera</td>
-                <td>jean@yahoo.rw</td>
-                <td>Your are good to go</td>
-                <td>10/09/2023</td>
-              </tr>
-              <tr>
-                <td>Jean Musonera</td>
-                <td>jean@yahoo.rw</td>
-                <td>Your are good to go</td>
-                <td>10/09/2023</td>
-              </tr>
-              <tr>
-                <td>Jean Musonera</td>
-                <td>jean@yahoo.rw</td>
-                <td>Your are good to go</td>
-                <td>10/09/2023</td>
-              </tr>
-            </table>
-          </div>
           <div class="add-article-form" id="add-article-dashbd-form">
-            <form action="#" method="post" onsubmit="return false;">
+            <form
+              action="#"
+              method="post"
+              onsubmit="return false;"
+              name="addArtcleForm"
+              id="addArtcleForm"
+            >
               <h2>Add a new article here</h2>
               <div>
                 <label for="title">Title</label><br />
@@ -140,32 +74,141 @@
                   id="title"
                   name="title"
                   placeholder="The title of the article"
-                  required
                 />
+                <small id="articleTitleError" class="contact-form-error"
+                  >The title can not be empty!</small
+                >
               </div>
               <div>
                 <label for="description">Description</label><br />
-                <textarea name="description" id="" cols="20" rows="4" required>
-    Write the description or the body of the article here</textarea
+                <textarea
+                  name="description"
+                  id="editor"
+                  class="editorWithTextArea"
+                ></textarea>
+
+                <small id="articleDescriptionError" class="contact-form-error"
+                  >The body of the article can not be empty!</small
                 >
-                <div>
-                  <label for="file">Image</label><br />
-                  <input type="file" id="file" name="file" required />
-                </div>
               </div>
+              <div>
+                <label for="file">Image</label><br />
+                <input type="file" id="file" name="file" />
+                <small id="articleImageUploadError" class="contact-form-error"
+                  >Please upload an image!</small
+                >
+              </div>
+
               <button
-                onclick="return disappearForm();"
+                onclick="validateArticleForm();"
                 id="add-article-btn"
-                class="btn contact-btn"
+                class="btn contact-btn add-article-btn"
                 type="submit"
               >
                 Add article
               </button>
+              <button
+                onclick="hideAddForm()"
+                id="add-article-btn"
+                class="btn contact-btn add-article-btn"
+                type="reset"
+              >
+                Cancel
+              </button>
             </form>
+            <div id="addArticlePopup" class="popup">
+              <p>The article is successfully created!</p>
+              <button onclick="return hideAddForm();">Ok</button>
+            </div>
+          </div>
+          <div class="add-article-form" id="edit-article-dashbd-form">
+            <form
+              action="#"
+              method="post"
+              onsubmit="return false;"
+              name="editArtcleForm"
+              id="editArtcleForm"
+            >
+              <h2>Edit this article here</h2>
+              <div>
+                <label for="titleBlg">Title</label><br />
+                <input type="text" id="titleBlg" name="titleBlg" />
+              </div>
+              <div>
+                <label for="editFormeditor">Description</label><br />
+                <textarea name="editFormeditor" id="editFormeditor"></textarea>
+              </div>
+              <div>
+                <label for="editFile">Image</label><br />
+                <input type="file" id="editFile" name="editFile" />
+                <small id="articleImageUploadError" class="contact-form-error"
+                  >Please upload an image!</small
+                >
+              </div>
+
+              <button
+                id="edit-article-btn"
+                class="btn contact-btn add-article-btn"
+                type="submit"
+              >
+                Update article
+              </button>
+              <button
+                onclick="return hideEditForm();"
+                id="editFormCancel"
+                class="btn contact-btn add-article-btn"
+                type="reset"
+              >
+                Cancel
+              </button>
+            </form>
+            <div id="editPopup" class="popup">
+              <p>Article is successfully updated!</p>
+              <button onclick="return hideEditForm();">Ok</button>
+            </div>
+          </div>
+        </div>
+        <div id="all-messages">
+          <table id="tableMessages">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>Message</th>
+                <th>Date</th>
+                <th>Del</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div id="tablePopup" class="popup">
+            <p>There is no any message here!</p>
+            <button onclick="return hideTable();">Ok</button>
           </div>
         </div>
       </div>
       <script src="./index.js"></script>
+      <script src="https://cdn.ckeditor.com/ckeditor5/35.3.2/classic/ckeditor.js"></script>
+      <script>
+        let editor;
+        let editEditor;
+
+        ClassicEditor.create(document.querySelector("#editor"))
+          .then((newEditor) => {
+            editor = newEditor;
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+        ClassicEditor.create(document.querySelector("#editFormeditor"))
+          .then((Editor) => {
+            editEditor = Editor;
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      </script>
     </main>
   </body>
 </html>

@@ -16,7 +16,7 @@
             <input type="checkbox" class="menu-toggler" />
             <div class="humberger"></div>
             <div class="menu-list">
-              <a href="./landing.html">Home</a
+              <a href="./index.html">Home</a
               ><a href="./aboutme.html">About Me</a
               ><a href="./contactme.html">Contact Me</a
               ><a href="./skills.html">Skills</a
@@ -29,73 +29,121 @@
         </nav>
       </header>
       <div class="contacdiv">
-        <p>Contact me via this form<br />for more information</p>
-        <form action="#" method="post" onsubmit="return false">
-          <h2>Contact Me</h2>
-          <div>
-            <label for="contName">Name</label><br />
-            <input
-              type="text"
-              id="contName"
-              name="contName"
-              placeholder="Enter your full name"
-            />
-            <small id="contNameError" class="contact-form-error"
-              >This field can not be empty!</small
-            >
-          </div>
-          <div>
-            <label for="contEmail">Email</label><br />
-            <input
-              type="email"
-              id="contEmail"
-              name="contEmail"
-              placeholder="Enter your email"
-              required
-            />
-            <small id="contEmailError" class="contact-form-error"
-              >This field can not be empty!</small
-            >
-          </div>
-          <div>
-            <label for="phone">Phone Number</label><br />
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              placeholder="+250700000000"
-              required
-            />
-            <small id="contPhoneError" class="contact-form-error"
-              >This field can not be empty!</small
-            >
-            <small id="contPhoneEengthError" class="contact-form-error"
-              >Phone should be at least 10 digits!</small
-            >
-          </div>
-          <div>
-            <label for="message">Message</label><br />
-            <textarea
-              name="message"
-              id="message"
-              placeholder="Write your message here"
-            ></textarea>
-            <small id="contMessageError" class="contact-form-error"
-              >This field can not be empty!</small
-            >
-            <small id="contMessageLengthError" class="contact-form-error"
-              >Message is too short!</small
-            >
-          </div>
-          <button
-            class="btn contact-btn"
-            onclick="return contactFormValidation();"
-            type="submit"
+        <div class="socialDiv">
+          <h5>Contact me on</h5>
+          <a href="" class="disabled"
+            ><i class="fa-sharp fa-solid fa-phone"></i>+250789706729</a
           >
-            Send message
-          </button>
-        </form>
+          <a href="" class="disabled"
+            ><i class="fa-solid fa-envelope"></i>mutabazijimmy9@gmail.com</a
+          >
+          <div>
+            <a href="https://twitter.com/MutabaziJimmy1" target="_blank"
+              ><i class="fa-brands fa-twitter"></i
+            ></a>
+            <a
+              href="https://www.linkedin.com/in/mutabazi-jimmy-134528116/"
+              target="_blank"
+              ><i class="fa-brands fa-linkedin"></i
+            ></a>
+            <a href="https://github.com/jimmymut" target="_blank"
+              ><i class="fa-brands fa-github"></i
+            ></a>
+          </div>
+          <p>For more information, reach me via the Contact Me form</p>
+        </div>
+        <div id="sendMessageForm" class="send-message-class">
+          <form
+            id="sendMessage"
+            action="#"
+            method="post"
+            onsubmit="return false"
+          >
+            <h2>Contact Me</h2>
+            <div>
+              <label for="contName">Name</label><br />
+              <input
+                type="text"
+                id="contName"
+                name="contName"
+                placeholder="Enter your full name"
+              />
+              <small id="contNameError" class="contact-form-error"
+                >This field can not be empty!</small
+              >
+              <small id="contfullNameLengthError" class="contact-form-error"
+                >This name is too short!</small
+              >
+            </div>
+            <div>
+              <label for="contEmail">Email</label><br />
+              <input
+                type="email"
+                id="contEmail"
+                name="contEmail"
+                placeholder="Enter your email"
+              />
+              <small id="contEmailError" class="contact-form-error"
+                >This field can not be empty!</small
+              >
+              <small id="contEmailValidateError" class="contact-form-error"
+                >Invalid email!</small
+              >
+            </div>
+            <div>
+              <label for="phone">Phone Number</label><br />
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                placeholder="+250700000000"
+                required
+              />
+              <small id="contPhoneError" class="contact-form-error"
+                >This field can not be empty!</small
+              >
+              <small id="contPhoneEengthError" class="contact-form-error"
+                >Phone should be at least 10 digits!</small
+              >
+              <small id="contPhonecountryCodeError" class="contact-form-error"
+                >Please include the country code!</small
+              >
+              <small id="contPhoneNumbervalidError" class="contact-form-error"
+                >Invalid phone number!</small
+              >
+            </div>
+            <div>
+              <label for="message">Message</label><br />
+              <textarea
+                name="message"
+                id="message"
+                placeholder="Write your message here"
+              ></textarea>
+              <small id="contMessageError" class="contact-form-error"
+                >This field can not be empty!</small
+              >
+              <small id="contMessageLengthError" class="contact-form-error"
+                >Message is too short!</small
+              >
+            </div>
+            <button
+              class="btn contact-btn"
+              onclick="return contactFormValidation();"
+              type="submit"
+            >
+              Send message
+            </button>
+          </form>
+          <div class="popup">
+            <p>The message is successfully sent!</p>
+            <button onclick="return showContactForm();">Ok</button>
+          </div>
+        </div>
       </div>
+      <script
+        src="https://kit.fontawesome.com/131ff21fb8.js"
+        crossorigin="anonymous"
+      ></script>
       <script src="./index.js"></script>
     </main>
   </body>
