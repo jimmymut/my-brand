@@ -11,18 +11,18 @@
     <main>
       <header>
         <nav>
-          <!-- <hr /> -->
           <div class="navdiv">
             <input type="checkbox" class="menu-toggler" />
             <div class="humberger"></div>
             <div class="menu-list">
-              <a href="./index.html">Home</a
-              ><a href="./aboutme.html">About Me</a
-              ><a href="./contactme.html">Contact Me</a
+              <a href="./index.html">Home</a><a href="./aboutme.html">AboutMe</a
+              ><a href="./contactme.html">ContactMe</a
               ><a href="./skills.html">Skills</a
               ><a href="./portfolio.html">Portfolio</a
               ><a href="./blogs.html">Blogs</a>
-              <a href="./login.html">Admin</a>
+              <a href="./userSignUp.html">SignUp</a>
+              <a href="./login.html">Login</a>
+              <a href="./adminSignUp.html">Admin</a>
             </div>
           </div>
           <hr />
@@ -30,11 +30,11 @@
       </header>
       <div class="contacdiv">
         <div class="socialDiv">
-          <h5>Contact me on</h5>
-          <a href="" class="disabled"
+          <h3>Contact me on</h3>
+          <a href="#" class="disabled"
             ><i class="fa-sharp fa-solid fa-phone"></i>+250789706729</a
           >
-          <a href="" class="disabled"
+          <a href="#" class="disabled"
             ><i class="fa-solid fa-envelope"></i>mutabazijimmy9@gmail.com</a
           >
           <div>
@@ -50,15 +50,11 @@
               ><i class="fa-brands fa-github"></i
             ></a>
           </div>
-          <p>For more information, reach me via the Contact Me form</p>
+          <p>For more information, reach me via the Contact Me form.</p>
         </div>
         <div id="sendMessageForm" class="send-message-class">
-          <form
-            id="sendMessage"
-            action="#"
-            method="post"
-            onsubmit="return false"
-          >
+          <div class="loader"><strong>Loading...</strong></div>
+          <form id="sendMessage" method="post">
             <h2>Contact Me</h2>
             <div>
               <label for="contName">Name</label><br />
@@ -72,7 +68,7 @@
                 >This field can not be empty!</small
               >
               <small id="contfullNameLengthError" class="contact-form-error"
-                >This name is too short!</small
+                >This field needs two names, first name and last name!</small
               >
             </div>
             <div>
@@ -136,7 +132,7 @@
           </form>
           <div class="popup">
             <p>The message is successfully sent!</p>
-            <button onclick="return showContactForm();">Ok</button>
+            <button onclick="return location.reload();">Ok</button>
           </div>
         </div>
       </div>

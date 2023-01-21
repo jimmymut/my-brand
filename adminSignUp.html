@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="style.css" />
+    <title>Sign up page</title>
+  </head>
+  <body onload="return isAdmin();">
+    <h1 class="login-header">Want to create admin account?</h1>
+    <div class="login-div sign-up-form-div">
+      <div class="loader admin-sign-up-loader"><strong>Loading...</strong></div>
+      <form
+        id="admin-sign-up-form"
+        class="user-forms"
+        action="#"
+        method="post"
+        onsubmit="return false"
+      >
+        <div>
+          <label for="fname">First Name</label><br />
+          <input
+            type="text"
+            id="fname"
+            name="fname"
+            placeholder="Enter your first name"
+          />
+          <small id="adminfnameError" class="contact-form-error"
+            >First name can not be empty!</small
+          >
+          <small id="adminfnameValidateError" class="contact-form-error"
+            >The name should be at least 3 characters!</small
+          >
+        </div>
+
+        <div>
+          <label for="lname">Last Name</label><br />
+          <input
+            type="text"
+            id="lname"
+            name="lname"
+            placeholder="Enter your last name"
+          />
+          <small id="adminlasNameError" class="contact-form-error"
+            >Last name can not be empty!</small
+          >
+          <small id="adminlasNameValidateError" class="contact-form-error"
+            >The name should be at least 3 characters!</small
+          >
+        </div>
+        <div>
+          <label for="adminEail">Email</label><br />
+          <input
+            type="email"
+            id="adminEail"
+            name="email"
+            placeholder="Enter your email"
+          />
+          <small id="adminEmailError" class="contact-form-error"
+            >Email can not be empty!</small
+          >
+          <small id="adminEmailValidateError" class="contact-form-error"
+            >Invalid email!</small
+          >
+        </div>
+        <div>
+          <label for="adminpass">Password</label><br />
+          <input
+            type="password"
+            id="adminpass"
+            name="password"
+            placeholder="********"
+          />
+          <small id="adminPasswordError" class="contact-form-error"
+            >Password can not be empty!</small
+          >
+          <small id="adminPasswordLeng" class="contact-form-error"
+            >Password can should be at least 5 characters!</small
+          >
+        </div>
+        <div>
+          <label for="confadminpass">Comfirm Password</label><br />
+          <input
+            type="password"
+            id="confadminpass"
+            name="confadminpass"
+            placeholder="********"
+          />
+          <small id="adminPassComf" class="contact-form-error"
+            >Password can not be empty!</small
+          >
+          <small id="adminPasswordMismatch" class="contact-form-error"
+            >Passwords don't match!</small
+          >
+        </div>
+        <button
+          onclick="return adminSignUpValidation();"
+          class="btn contact-btn"
+          type="submit"
+        >
+          Sign Up
+        </button>
+      </form>
+    </div>
+    <p class="login-header">
+      Already an admin? <a href="./login.html">Login</a> or go
+      <a href="./index.html">Home</a>
+    </p>
+    <script src="./index.js"></script>
+  </body>
+</html>

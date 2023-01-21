@@ -5,12 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="style.css" />
-    <title>Admin login page</title>
+    <title>Login page</title>
   </head>
   <body>
-    <h1 class="login-header">Are you admin? Login here!</h1>
+    <h1 class="login-header">Already a user? Login here!</h1>
     <div class="login-div">
-      <form id="login-form" action="#" method="post" onsubmit="return false">
+      <div class="loader login-loader"><strong>Loading...</strong></div>
+      <form id="login-form" class="user-forms" action="#" method="post" onsubmit="return false">
         <small id="loginIcorrectEmailError" class="contact-form-error"
           >Email or password is incorrect!</small
         >
@@ -19,7 +20,7 @@
           <input
             type="email"
             id="loginEmail"
-            name="loginEmail"
+            name="email"
             placeholder="Enter your email"
           />
           <small id="loginEmailError" class="contact-form-error"
@@ -47,12 +48,13 @@
           class="btn contact-btn"
           type="submit"
         >
-          <a href="./dashboard.html">Login</a>
+          Login
         </button>
       </form>
     </div>
     <p class="login-header">
-      If you are not an admin, Go back <a href="./index.html">Home</a>
+      Not user? <a href="./userSignUp.html">Sign Up</a> or go
+      <a href="./index.html">Home</a>
     </p>
     <script src="./index.js"></script>
   </body>

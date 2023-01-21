@@ -20,7 +20,6 @@ body {
   backface-visibility: hidden;
   animation: homeslide 30s linear infinite 0s;
   animation-timing-function: ease-in-out;
-  /* animation: name duration timing-function delay iteration-count direction fill-mode; */
   width: 100%;
   min-height: 100vh;
   height: 100%;
@@ -55,7 +54,6 @@ body {
   text-align: center;
   color: #fefefe;
   opacity: 80%;
-  /* padding-top: 3%; */
   font-style: normal;
   font-weight: 400;
   font-size: 3.5vw;
@@ -87,8 +85,7 @@ nav {
 .navdiv a {
   text-decoration: none;
   padding: 4% 2% 0 2%;
-  /* padding: 30px 15px 0 15px; */
-  font-size: 2vw;
+  font-size: 24px;
 }
 .menu-list {
   display: flex;
@@ -176,8 +173,7 @@ hr {
   flex: 1;
   color: white;
   border-radius: 3px;
-  max-width: 350px;
-  width: fit-content;
+  width: 350px;
 }
 .socialDiv a {
   color: turquoise;
@@ -196,22 +192,41 @@ a.disabled {
   display: flex;
   justify-content: space-between;
 }
-.socialDiv h5 {
+.socialDiv h3 {
   margin-bottom: 10px;
 }
-
-.contacdiv p {
-  margin-top: 15px;
+.socialDiv p {
+  width: 350px;
 }
 
 #sendMessageForm {
   flex: 1;
-  max-width: 500px;
-  width: 100%;
-  height: fit-content;
+  width: 500px;
+  height: 500px;
   padding: 2% 5%;
   background-color: white;
   border-radius: 0.5%;
+  font-size: 20px;
+}
+#sendMessage input {
+  height: 40px;
+  padding: 0;
+  margin: 0;
+}
+#sendMessage textarea {
+  height: 60px;
+  padding: 0;
+  margin: 0;
+}
+.contact-btn {
+  background: #644dea;
+  border-radius: 5px;
+  height: 50px;
+  border: none;
+  margin-top: 38px;
+  font-size: 100%;
+  color: #ffffff;
+  cursor: pointer;
 }
 .popup {
   display: flex;
@@ -260,16 +275,6 @@ textarea {
 form div input {
   height: 38px;
 }
-.contact-btn {
-  background: #644dea;
-  border-radius: 5px;
-  height: 50px;
-  border: none;
-  margin-top: 38px;
-  font-size: 100%;
-  color: #ffffff;
-  cursor: pointer;
-}
 
 .dashboard-main {
   color: #000;
@@ -315,13 +320,11 @@ form div input {
   width: 80%;
   min-height: 100vh;
   height: 100%;
-  /* flex: 8; */
   padding-right: 5%;
   padding-bottom: 0%;
   border-radius: 8px;
   margin: 8px 8px 8px 0;
   float: right;
-  /* align-items: flex-end; */
 }
 
 .profile-pic-div {
@@ -473,7 +476,6 @@ textarea::placeholder {
   max-width: 250px;
   width: 100%;
   height: 280px;
-  /* height: 100%; */
   background-color: #ffffff;
   color: #000;
   margin: 3%;
@@ -524,23 +526,29 @@ textarea::placeholder {
 .login-div {
   max-width: 400px;
   width: 100%;
+  height: 450px;
   margin: auto;
   background-color: #ffffff;
   border-radius: 10px;
 }
 
-#login-form {
+.sign-up-form-div {
+  max-width: 550px;
+  height: fit-content;
+}
+
+.user-forms {
   color: #000;
   padding: 5vw;
 }
 
-#login-form a {
+.user-forms a {
   text-decoration: none;
   color: purple;
   float: right;
   font-size: 16px;
 }
-#login-form button a {
+.user-forms button a {
   color: white;
 }
 
@@ -554,7 +562,6 @@ textarea::placeholder {
 }
 
 .portfolio-ol {
-  /* color: #ffffff; */
   padding: 0 10%;
   display: flex;
   justify-content: center;
@@ -565,8 +572,6 @@ textarea::placeholder {
 
 .work-done {
   width: 80%;
-  /* height: 45vw; */
-  /* background-color: white; */
   color: #fff;
   border-radius: 1vw;
   padding: 1vw;
@@ -599,7 +604,6 @@ textarea::placeholder {
   transition: 0.3%;
   left: 0;
 }
-
 .dashboard-hamberger {
   background-color: #000;
 }
@@ -638,7 +642,6 @@ input.menu-toggler {
   z-index: 3;
   opacity: 0;
 }
-
 .dashtogler {
   height: 100%;
   width: 100%;
@@ -670,9 +673,8 @@ input:checked ~ .leftdiv {
 }
 
 .blogpost-image {
-  width: 60%;
-  /* width: 30vw; */
-  height: 30vw;
+  width: 70vw;
+  height: 50vw;
   float: left;
   padding-right: 5vw;
 }
@@ -680,7 +682,6 @@ input:checked ~ .leftdiv {
 .blogpost-div {
   margin: 3%;
   padding: 5%;
-  /* display: flex; */
 }
 
 .blogpost-time {
@@ -716,7 +717,6 @@ input:checked ~ .leftdiv {
   border: 1px solid #ffffff;
   border-radius: 2px;
   background-color: #060113c6;
-  /* padding: 1vw; */
   color: white;
   font-size: 24px;
 }
@@ -765,7 +765,6 @@ input:checked ~ .leftdiv {
 .blog-summary-div {
   background-color: white;
   color: #000;
-  /* width: 100px; */
   height: 400px;
   display: flex;
   flex-direction: column;
@@ -788,8 +787,16 @@ input:checked ~ .leftdiv {
 .blog-sum-title {
   display: flex;
   flex-direction: column;
+  width: 90%;
+}
+.blog-sum-title p {
+  font-size: small;
+}
+.blog-sum-main-title {
+  width: 100%;
 }
 .article-summury {
+  font-size: 15px;
   margin: 10px 20px;
 }
 .mainblog-summry {
@@ -798,17 +805,15 @@ input:checked ~ .leftdiv {
   align-items: center;
   margin: 30px auto;
 }
-/* #blog-summary-2 {
-  display: none;
-} */
-
 .blog-summary-div img {
   width: 220px;
-  height: 150px;
+  height: 120px;
+  margin-top: 20px;
 }
 .artcle img {
   width: 30px;
   height: 30px;
+  margin-top: auto;
 }
 
 .btn a {
@@ -826,11 +831,11 @@ input:checked ~ .leftdiv {
   overflow-x: auto;
 }
 table {
+  max-width: 1000px;
+  width: 100%;
   margin-top: 30px;
   border-radius: 3px;
-  width: 100%;
   border-collapse: collapse;
-  /* border: 1px solid black; */
 }
 tr:nth-of-type(odd) {
   background-color: whitesmoke;
@@ -852,8 +857,51 @@ tr {
   background-color: white;
 }
 
-@media screen and (max-width: 1048px) {
+.loader {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  transition: opacity 1s, visibility 1s;
+}
 
+.loader::after {
+  content: "";
+  width: 80px;
+  height: 80px;
+  border: 10px solid #dddddd;
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: loading 1s ease infinite;
+}
+@keyframes loading {
+  from {
+    transform: rotate(0turn);
+  }
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.loader {
+  display: none;
+}
+
+div.dashboard-loader {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+}
+
+#image-edit-preview,
+.image-create-preview {
+  width: 150px;
+  height: 150px;
+}
+
+@media screen and (max-width: 1048px) {
   .humberger,
   .menu-toggler {
     display: block;
@@ -870,7 +918,7 @@ tr {
   hr {
     display: none;
   }
-
+  
   .dash-heading {
     margin-top: 5%;
   }
@@ -882,7 +930,6 @@ tr {
     padding-top: 40px;
     padding-left: 10px;
     position: fixed;
-    /* margin-top: 0; */
     top: 0;
     left: -200px;
     width: 200px;
@@ -910,9 +957,14 @@ tr {
     float: none;
     border-radius: 0%;
   }
-
-  .swiper {
-    width: 912px;
+  .contacdiv {
+    flex-direction: column;
+  }
+  #sendMessage {
+    padding-bottom: 30px;
+  }
+  .socialDiv {
+    padding-bottom: 30px;
   }
 }
 
@@ -936,14 +988,13 @@ tr {
     margin-top: 0;
     max-width: 30vw;
     width: 100%;
-    /* max-height: 30vw; */
     height: 100%;
     font-size: 2.5vw;
     margin-bottom: 90px;
   }
-  
+
   .swiper {
-    width: 768px;
+    width: 900px;
   }
 
   .aboutmain-content {
@@ -964,20 +1015,9 @@ tr {
     flex-direction: column;
   }
   .navdiv a {
-    /* padding: 30px 15px 0 15px; */
     font-size: 24px;
   }
-
-  .contacdiv {
-    flex-direction: column;
-    font-size: 2.3vw;
-  }
-
-  .contacdiv form {
-    max-width: 50vw;
-    max-height: 55vw;
-    /* font-size: 3vw; */
-  }
+  
   .dashboard-main {
     display: flex;
     flex-direction: column;
@@ -999,33 +1039,17 @@ tr {
     right: 5%;
   }
 
-  .contacdiv p {
-    padding-bottom: 6vw;
-    font-size: 4vw;
-  }
-
   form div input,
   textarea {
     padding: 0.5vw;
     font-size: 2.3vw;
   }
-  .contact-btn {
-    margin-bottom: 1vw;
-    height: 6vw;
-    font-size: 2.3vw;
+  
+  .blog-summury-lc {
+    display: flex;
+    flex-direction: row;
   }
 
-  .mainblog-summry {
-    flex-direction: column;
-    position: relative;
-    /* margin-top: 15px; */
-  }
-  .blog-summary-div {
-    width: 35vw;
-    height: 45vw;
-    margin-top: 15px;
-    font-size: 2vw;
-  }
   .blog-summary-div img {
     width: 25vw;
   }
@@ -1043,16 +1067,9 @@ tr {
     margin-top: 15px;
     margin-bottom: 15px;
   }
-  .blogpost-image {
-    width: 70vw;
-    height: 50vw;
-    float: left;
-    padding-right: 5vw;
-  }
 
   .blogpost-div form {
     width: 65%;
-    /* height: 20%; */
   }
 
   .blogpost-div input {
@@ -1060,8 +1077,8 @@ tr {
     width: 200px;
   }
   .post-like-commet img {
-    width: 3.5vw;
-    height: 3.5vw;
+    width: 30px;
+    height: 30px;
   }
 
   .technical-skills {
@@ -1083,12 +1100,15 @@ tr {
     height: 25px;
   }
   .login-div {
-    width: 40%;
     font-size: 2.5vw;
   }
-  #login-form a {
-    font-size: 2vw;
+  .user-forms a {
+    font-size: 16px;
   }
+  .login-div {
+    width: 380px;
+  }
+
   #dashboard-all-articles .artcle img {
     width: 30px;
     height: 30px;
@@ -1097,33 +1117,36 @@ tr {
   .all-articles form input {
     font-size: 14px;
   }
-  /* table {
-    width: 80%;
-  } */
+  .socialDiv {
+    font-size: 24px;
+  }
 }
 @media screen and (max-width: 600px) {
-  .contacdiv form {
-    max-width: 60vw;
-    max-height: 70vw;
-    height: fit-content;
-    font-size: 3vw;
+  #sendMessageForm {
+    width: 90%;
   }
   .swiper {
-    width: 560px;
+    width: 900px;
   }
   form div input,
   textarea {
     padding: 0.8vw;
     font-size: 2.5vw;
   }
-  .blog-summary-div {
-    width: 50%;
-    height: fit-content;
-    padding-top: 25px;
-    padding-bottom: 25px;
-    font-size: 3vw;
-    margin-bottom: 20px;
+  .login-div {
+    width: 350px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+    font-size: 18px;
   }
+  .login-div input {
+    font-size: 18px;
+  }
+  .login-div button {
+    font-size: 18px;
+    height: 40px;
+  }
+
   .blog-summary-div img {
     width: 65%;
   }
@@ -1141,15 +1164,22 @@ tr {
   }
 }
 
+@media screen and (max-width: 500px) {
+  .socialDiv {
+    max-width: 200px;
+    width: 100%;
+    font-size: 18px;
+  }
+  .socialDiv p,
+  .socialDiv div {
+    max-width: 200px;
+    width: 100%;
+  }
+}
+
 @media screen and (max-width: 414px) {
   .contacdiv form {
-    /* max-width: 70vw;
-    max-height: 100vw; */
-
-    font-size: 4vw;
-  }
-  .swiper {
-    width: 400px;
+    font-size: 16px;
   }
   form div input,
   textarea {
@@ -1157,12 +1187,9 @@ tr {
     font-size: 3vw;
   }
   .contact-btn {
-    font-size: 3vw;
+    font-size: 16px;
   }
-  .blog-summary-div {
-    width: 60%;
-    font-size: 3.5vw;
-  }
+
   .technical-skills div,
   .soft-skills {
     max-width: 55vw;
@@ -1170,18 +1197,16 @@ tr {
     font-size: 3.5vw;
   }
   .login-div {
-    width: 55%;
-    font-size: 3.5vw;
+    width: 90%;
     padding-top: 20px;
     padding-bottom: 20px;
   }
-
-  /* #login-form input {
-    padding-top: 10px;
-    padding-bottom: 10px;
-  } */
-  #login-form a {
-    font-size: 3vw;
+  .login-div input {
+    font-size: 15px;
+  }
+  .login-div button {
+    font-size: 15px;
+    height: 40px;
   }
   .article-edit-delete {
     display: flex;

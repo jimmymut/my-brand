@@ -12,21 +12,22 @@
     <title>Blogs</title>
   </head>
   <body onload="createBlogSummary();">
+    <div class="loader dashboard-loader"><strong>Loading...</strong></div>
     <main>
       <header>
         <nav>
-          <!-- <hr /> -->
           <div class="navdiv">
             <input type="checkbox" class="menu-toggler" />
             <div class="humberger"></div>
             <div class="menu-list">
-              <a href="./index.html">Home</a
-              ><a href="./aboutme.html">About Me</a
-              ><a href="./contactme.html">Contact Me</a
+              <a href="./index.html">Home</a><a href="./aboutme.html">AboutMe</a
+              ><a href="./contactme.html">ContactMe</a
               ><a href="./skills.html">Skills</a
               ><a href="./portfolio.html">Portfolio</a
               ><a href="./blogs.html">Blogs</a>
-              <a href="./login.html">Admin</a>
+              <a href="./userSignUp.html">SignUp</a>
+              <a href="./login.html">Login</a>
+              <a href="./adminSignUp.html">Admin</a>
             </div>
           </div>
           <hr />
@@ -47,8 +48,8 @@
       <script>
         var swiper = new Swiper(".mySwiper", {
           slidesPerView: 3,
-          spaceBetween: 30,
-          slidesPerGroup: 3,
+          spaceBetween: 0,
+          slidesPerGroup: 1,
           loop: true,
           loopFillGroupWithBlank: true,
           pagination: {
