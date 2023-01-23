@@ -11,19 +11,38 @@
     <div class="loader dashboard-loader"><strong>Loading...</strong></div>
     <main>
       <header>
+        <div class="header-div">
+          <div class="owner-sum">
+            <img
+              class="owner-profile"
+              src="./Images/profile.png"
+              alt="owner profile picture"
+            />
+            <p>Jimmy's website</p>
+          </div>
+          <div class="header-status-div">
+            <button class="btn header-btn signin-btn">
+              <a href="./userSignUp.html">Sign Up</a></button
+            ><button class="btn header-btn login-btn">
+              <a href="./login.html">Log In</a>
+            </button>
+            <div class="prof-pic-name">
+              <i class="fa-sharp fa-2x fa-solid fa-circle-user"></i>
+              <p class="loggedin-profile-name"></p>
+            </div>
+          </div>
+        </div>
         <nav>
           <div class="navdiv">
             <input type="checkbox" class="menu-toggler" />
             <div class="humberger"></div>
             <div class="menu-list">
-              <a href="./index.html">Home</a><a href="./aboutme.html">AboutMe</a
-              ><a href="./contactme.html">ContactMe</a
-              ><a href="./skills.html">Skills</a
-              ><a href="./portfolio.html">Portfolio</a
-              ><a href="./blogs.html">Blogs</a>
-              <a href="./userSignUp.html">SignUp</a>
-              <a href="./login.html">Login</a>
-              <a href="./adminSignUp.html">Admin</a>
+              <a href="./index.html">Home</a>
+              <a href="./aboutme.html">AboutMe</a
+              ><a href="./contactme.html">ContactMe</a>
+              <a href="./blogs.html">Blogs</a>
+              <a href="./skills.html">Skills</a
+              ><a href="./portfolio.html">Portfolio</a>
             </div>
           </div>
           <hr />
@@ -32,6 +51,10 @@
       <div class="blogpost-div">
         <h1 class="blog-header">Blog Post</h1>
       </div>
+      <script
+        src="https://kit.fontawesome.com/131ff21fb8.js"
+        crossorigin="anonymous"
+      ></script>
       <script src="./index.js"></script>
     </main>
   </body>

@@ -1,26 +1,63 @@
-window.addEventListener("load", () => {
-  document.querySelector("div.dashboard-loader").style.display = "none";
+window.addEventListener("DOMContentLoaded", async () => {
+  isLoggedin();
+  const profileNameT = document.querySelector("p.loggedin-profile-name");
+  const token = localStorage.getItem("token");
+  const loggedInUser = await (
+    await fetch(`http://localhost:5000/users/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  ).json();
+
+  profileNameT.textContent = `${loggedInUser.name}`;
+  document.querySelector("div.prof-pic-name").style.display = "flex";
 });
 
-async function isAdmin() {
+async function genLogout() {
+  const logoutEle = document.querySelector(".btn.header-btn.login-btn");
+  logoutEle.addEventListener("click", () => {
+    if (logoutEle.innerHTML == "Log out") {
+      logoutFunc();
+    }
+  });
+}
+genLogout();
+
+async function isLoggedin() {
   const token = localStorage.getItem("token");
-  fetch("https://jimmy-portfolio-backend.up.railway.app/admins/dashboard", {
+  fetch("http://localhost:5000/users/dashboard", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   })
-    .then((response) => {
-      if (response.status !== 200) {
-        location.href = "./index.html";
+    .then(async (response) => {
+      if (response.status === 200) {
+        document.querySelector(".btn.header-btn.login-btn").innerHTML =
+          "Log out";
+        const disableSup = document.querySelector(
+          ".btn.header-btn.signin-btn a"
+        );
+        disableSup.classList.add("disabled");
+        document.querySelector(".btn.header-btn.signin-btn").style =
+          "display:none";
       }
     })
     .catch((err) => console.log(err));
 }
-async function displayAddArticleForm() {
+
+function displayAddArticleForm() {
   document.getElementById("add-article-dashbd-form").style.display = "block";
   document.querySelector(".dashtogler").checked = false;
   document.getElementById("edit-article-dashbd-form").style.display = "none";
+  document.getElementById("sign-up-form-div-dash").style.display = "none";
 }
+
+function displayAdminSignUp() {
+  document.getElementById("add-article-dashbd-form").style.display = "none";
+  document.getElementById("edit-article-dashbd-form").style.display = "none";
+  document.getElementById("all-messages").style.display = "none";
+  document.getElementById("sign-up-form-div-dash").style.display = "block";
+}
+
 async function validateEditArticleForm() {
   const token = localStorage.getItem("token");
 
@@ -63,6 +100,7 @@ async function validateEditArticleForm() {
       return false;
     }
     const blogId = document.querySelector("span.edi-form_id").innerHTML;
+
     if (descriptionValue === "" && image.value === "") {
       document.getElementById("editArtcleForm").style = "display: none";
       document.getElementById(
@@ -70,17 +108,14 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(
-        `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ title: titleEditValue }),
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ title: titleEditValue }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
         .then((response) => {
           loaderEl.style.display = "none";
           if (response.status === 200) {
@@ -104,17 +139,14 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(
-        `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ description: descriptionValue }),
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ description: descriptionValue }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
         .then((response) => {
           loaderEl.style.display = "none";
           if (response.status === 200) {
@@ -132,44 +164,37 @@ async function validateEditArticleForm() {
         })
         .catch((err) => console.log(err));
     } else if (titleEditValue === "" && descriptionValue === "") {
-      const reader = new FileReader();
-      reader.addEventListener("load", async () => {
-        const imageValue = reader.result;
-        document.getElementById("editArtcleForm").style = "display: none";
-        document.getElementById(
-          "edit-article-dashbd-form"
-        ).style.backgroundColor = "white";
-        const loaderEl = document.querySelector("div.loader-edit-article");
-        loaderEl.style.display = "flex";
-        await fetch(
-          `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-          {
-            method: "PATCH",
-            body: JSON.stringify({ file: imageValue }),
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        )
-          .then((response) => {
-            loaderEl.style.display = "none";
-            if (response.status === 200) {
-              document.getElementById("editPopup").style = "display: flex";
-            } else {
-              document.getElementById("editArtcleForm").style = "display: none";
-              document.getElementById(
-                "edit-article-dashbd-form"
-              ).style.backgroundColor = "white";
+      const formDada = new FormData();
+      formDada.append("file", image.files[0]);
+      document.getElementById("editArtcleForm").style = "display: none";
+      document.getElementById(
+        "edit-article-dashbd-form"
+      ).style.backgroundColor = "white";
+      const loaderEl = document.querySelector("div.loader-edit-article");
+      loaderEl.style.display = "flex";
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: formDada,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => {
+          loaderEl.style.display = "none";
+          if (response.status === 200) {
+            document.getElementById("editPopup").style = "display: flex";
+          } else {
+            document.getElementById("editArtcleForm").style = "display: none";
+            document.getElementById(
+              "edit-article-dashbd-form"
+            ).style.backgroundColor = "white";
 
-              document.getElementById("article-update-message").style =
-                "display: flex";
-              return;
-            }
-          })
-          .catch((err) => console.log(err));
-      });
-      reader.readAsDataURL(image.files[0]);
+            document.getElementById("article-update-message").style =
+              "display: flex";
+            return;
+          }
+        })
+        .catch((err) => console.log(err));
     } else if (image.value === "") {
       document.getElementById("editArtcleForm").style = "display: none";
       document.getElementById(
@@ -177,20 +202,17 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(
-        `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            title: titleEditValue,
-            description: descriptionValue,
-          }),
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: titleEditValue,
+          description: descriptionValue,
+        }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
         .then((response) => {
           loaderEl.style.display = "none";
           if (response.status === 200) {
@@ -208,27 +230,22 @@ async function validateEditArticleForm() {
         })
         .catch((err) => console.log(err));
     } else if (descriptionValue === "") {
-      const imageValue = reader.result;
+      const newFormDada = new FormData();
+      newFormDada.append("title", titleEditValue);
+      newFormDada.append("file", image.files[0]);
       document.getElementById("editArtcleForm").style = "display: none";
       document.getElementById(
         "edit-article-dashbd-form"
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(
-        `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            title: titleEditValue,
-            file: imageValue,
-          }),
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: newFormDada,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then((response) => {
           loaderEl.style.display = "none";
           if (response.status === 200) {
@@ -246,27 +263,22 @@ async function validateEditArticleForm() {
         })
         .catch((err) => console.log(err));
     } else if (titleEditValue === "") {
-      const imageValue = reader.result;
+      const newFormDada = new FormData();
+      newFormDada.append("description", descriptionValue);
+      newFormDada.append("file", image.files[0]);
       document.getElementById("editArtcleForm").style = "display: none";
       document.getElementById(
         "edit-article-dashbd-form"
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(
-        `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            description: descriptionValue,
-            file: imageValue,
-          }),
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      )
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: newFormDada,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then((response) => {
           loaderEl.style.display = "none";
           if (response.status === 200) {
@@ -284,48 +296,39 @@ async function validateEditArticleForm() {
         })
         .catch((err) => console.log(err));
     } else {
-      const reader = new FileReader();
-      reader.addEventListener("load", async () => {
-        const imageValue = reader.result;
-        document.getElementById("editArtcleForm").style = "display: none";
-        document.getElementById(
-          "edit-article-dashbd-form"
-        ).style.backgroundColor = "white";
-        const loaderEl = document.querySelector("div.loader-edit-article");
-        loaderEl.style.display = "flex";
-        await fetch(
-          `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`,
-          {
-            method: "PATCH",
-            body: JSON.stringify({
-              title: titleEditValue,
-              description: descriptionValue,
-              file: imageValue,
-            }),
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        )
-          .then((response) => {
-            loaderEl.style.display = "none";
-            if (response.status === 200) {
-              document.getElementById("editPopup").style = "display: flex";
-            } else {
-              document.getElementById("editArtcleForm").style = "display: none";
-              document.getElementById(
-                "edit-article-dashbd-form"
-              ).style.backgroundColor = "white";
+      const formDadaEdit = new FormData();
+      formDadaEdit.append("title", titleEditValue);
+      formDadaEdit.append("description", descriptionValue);
+      formDadaEdit.append("file", image.files[0]);
+      document.getElementById("editArtcleForm").style = "display: none";
+      document.getElementById(
+        "edit-article-dashbd-form"
+      ).style.backgroundColor = "white";
+      const loaderEl = document.querySelector("div.loader-edit-article");
+      loaderEl.style.display = "flex";
+      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+        method: "PATCH",
+        body: formDadaEdit,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+        .then((response) => {
+          loaderEl.style.display = "none";
+          if (response.status === 200) {
+            document.getElementById("editPopup").style = "display: flex";
+          } else {
+            document.getElementById("editArtcleForm").style = "display: none";
+            document.getElementById(
+              "edit-article-dashbd-form"
+            ).style.backgroundColor = "white";
 
-              document.getElementById("article-update-message").style =
-                "display: flex";
-              return;
-            }
-          })
-          .catch((err) => console.log(err));
-      });
-      reader.readAsDataURL(image.files[0]);
+            document.getElementById("article-update-message").style =
+              "display: flex";
+            return;
+          }
+        })
+        .catch((err) => console.log(err));
     }
   });
 }
@@ -405,9 +408,7 @@ function showAllDashboardBlogs() {
 }
 
 async function createBlogSummary() {
-  const fetchedBlogs = await fetch(
-    "https://jimmy-portfolio-backend.up.railway.app/blogs"
-  );
+  const fetchedBlogs = await fetch("http://localhost:5000/blogs");
   const blogs = await fetchedBlogs.json();
   if (!blogs || blogs.length === 0) {
     const emptyArticle = document.createElement("p");
@@ -482,25 +483,33 @@ async function createBlogSummary() {
       summuryBlog.append(linkBlog);
       overAllDiv.append(summuryBlog);
     });
+    document.querySelector("div.dashboard-loader").style.display = "none";
   }
 }
+
 function uploadImage() {
   const fileIn = document.querySelector("#file");
   fileIn.addEventListener("change", (e) => {
-    const reader = new FileReader();
-    reader.addEventListener("load", () => {
-      const imagePreviewUpload = document.getElementById("image-edit-preview");
-      const imageUrl = reader.result;
-      const newimg = document.createElement("img");
-      newimg.src = imageUrl;
-      newimg.alt = "Preview";
-      const parent = imagePreviewUpload.parentNode;
-      parent.appendChild(newimg);
-    });
-    reader.readAsDataURL(fileIn.files[0]);
+    const prefile = URL.createObjectURL(e.target.files[0]);
+    const imagePreviewUpload = document.getElementById("image-create-preview");
+    const newimg = document.createElement("img");
+    newimg.src = prefile;
+    imagePreviewUpload.innerHTML = "";
+    imagePreviewUpload.appendChild(newimg);
+    newimg.style.display = "block";
   });
 }
 uploadImage();
+
+function uploadEditImage() {
+  const fileIn = document.querySelector("#editFile");
+  fileIn.addEventListener("change", (e) => {
+    const prefile = URL.createObjectURL(e.target.files[0]);
+    const imagePreviewUpload = document.getElementById("image-edit-preview");
+    imagePreviewUpload.src = prefile;
+  });
+}
+uploadEditImage();
 
 async function validateArticleForm() {
   const titleValue = document.getElementById("title").value;
@@ -563,7 +572,7 @@ async function validateArticleForm() {
         "white";
       const loaderEl = document.querySelector("div.create-new-article-form");
       loaderEl.style.display = "flex";
-      fetch("https://jimmy-portfolio-backend.up.railway.app/blogs", {
+      fetch("http://localhost:5000/blogs", {
         method: "POST",
         body: formDada,
         headers: {
@@ -656,13 +665,10 @@ async function validateArticleForm() {
               "div.delete-article-loader"
             );
             deleteBLoad.style.display = "flex";
-            fetch(
-              `https://jimmy-portfolio-backend.up.railway.app/blogs/${blog._id}`,
-              {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            )
+            fetch(`http://localhost:5000/blogs/${blog._id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            })
               .then(async (response) => {
                 deleteBLoad.style.display = "none";
                 if (response.status === 204) {
@@ -713,13 +719,10 @@ async function likesFunction() {
   const blogURI = window.location.href.split("?:").reverse();
   const blogId = blogURI[0];
   const token = localStorage.getItem("token");
-  fetch(
-    `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}/likes`,
-    {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  )
+  fetch(`http://localhost:5000/blogs/${blogId}/likes`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+  })
     .then(async (response) => {
       if (response.status === 200) {
         const result = await response.json();
@@ -765,30 +768,23 @@ async function validateComment() {
     }, 6000);
     return false;
   }
-  fetch(
-    `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}/comments`,
-    {
-      method: "post",
-      body: JSON.stringify({ comment: mainComment }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  )
+  fetch(`http://localhost:5000/blogs/${blogId}/comments`, {
+    method: "post",
+    body: JSON.stringify({ comment: mainComment }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
     .then(async (response) => {
       if (response.status === 200) {
         const result = await response.json();
         const newCmtLi = document.createElement("li");
         const commented = document.createElement("div");
         const commentedUser = await (
-          await fetch(
-            `https://jimmy-portfolio-backend.up.railway.app/users/${result.userId}`
-          )
+          await fetch(`http://localhost:5000/users/${result.userId}`)
         ).json();
-        commented.innerHTML = `<h5>${
-          commentedUser.firstName
-        }</h5><small>- ${new Date(
+        commented.innerHTML = `<h5>${commentedUser}</h5><small>- ${new Date(
           result.commentedAt
         ).toLocaleString()}</small>`;
         newCmtLi.append(commented);
@@ -808,9 +804,7 @@ async function validateComment() {
 
         document.querySelector(".full-mode-orderd-list").append(newCmtLi);
 
-        fetch(
-          `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}/comments/comments`
-        )
+        fetch(`http://localhost:5000/blogs/${blogId}/comments/comments`)
           .then(async (newRes) => {
             if (newRes.status === 200) {
               const newData = await newRes.json();
@@ -835,7 +829,7 @@ async function validateComment() {
 
 async function logoutFunc() {
   const token = localStorage.getItem("token");
-  await fetch("https://jimmy-portfolio-backend.up.railway.app/logout", {
+  await fetch("http://localhost:5000/logout", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -851,9 +845,7 @@ async function logoutFunc() {
 async function loadFullBlog() {
   const blogURI = window.location.href.split("?:").reverse();
   const blogId = blogURI[0];
-  const fetchedBlog = await fetch(
-    `https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`
-  );
+  const fetchedBlog = await fetch(`http://localhost:5000/blogs/${blogId}`);
   const blog = await fetchedBlog.json();
 
   const blogpost_div = document.querySelector("div.blogpost-div");
@@ -914,15 +906,13 @@ async function loadFullBlog() {
   const blogComments = blog.comments;
   blogComments.forEach(async (cmt) => {
     const commentedUser = await (
-      await fetch(
-        `https://jimmy-portfolio-backend.up.railway.app/users/${cmt.userId}`
-      )
+      await fetch(`http://localhost:5000/users/${cmt.userId}`)
     ).json();
     const olLi = document.createElement("li");
     const commented = document.createElement("div");
-    commented.innerHTML = `<h5>${
-      commentedUser.firstName
-    }</h5><small>- ${new Date(cmt.commentedAt).toLocaleString()}</small>`;
+    commented.innerHTML = `<h5>${commentedUser}</h5><small>- ${new Date(
+      cmt.commentedAt
+    ).toLocaleString()}</small>`;
     olLi.append(commented);
 
     const brTag = document.createElement("br");
@@ -981,17 +971,17 @@ async function loadFullBlog() {
   blogFormButton.textContent = "Add comment";
   formBlog.append(blogFormButton);
   blogpost_div.append(formBlog);
+
+  document.querySelector("div.dashboard-loader").style.display = "none";
 }
 
 async function loadDashboardDymanicContent() {
   const token = localStorage.getItem("token");
-  fetch("https://jimmy-portfolio-backend.up.railway.app/admins/dashboard", {
+  fetch("http://localhost:5000/admins/dashboard", {
     headers: { Authorization: `Bearer ${token}` },
   }).then(async (response) => {
     if (response.status === 200) {
-      const blogsArrayFetched = await fetch(
-        "https://jimmy-portfolio-backend.up.railway.app/blogs"
-      );
+      const blogsArrayFetched = await fetch("http://localhost:5000/blogs");
       const blogsArray = await blogsArrayFetched.json();
 
       if (!blogsArray || blogsArray.length === 0) {
@@ -1009,6 +999,7 @@ async function loadDashboardDymanicContent() {
 
           const aticle_title = document.createElement("p");
           aticle_title.className = "aticle-title";
+          aticle_title.id = `${blog._id}`;
           aticle_title.innerHTML = blog.title;
           article.append(aticle_title);
 
@@ -1056,13 +1047,15 @@ async function loadDashboardDymanicContent() {
           editImage.className = "article-edit-class";
           editImage.src = "./Images/image 8.svg";
           editImage.alt = "edit icon";
-          editImage.setAttribute("identifier", `${blog._id}`);
           editImage.addEventListener("click", () => {
             const formToEditArticle = document.getElementById(
               "edit-article-dashbd-form"
             );
             document.getElementById("add-article-dashbd-form").style.display =
               "none";
+            document.getElementById("sign-up-form-div-dash").style.display =
+              "none";
+            document.getElementById("all-messages").style.display = "none";
             formToEditArticle.style.display = "block";
             const editTitle = document.getElementById("titleBlg");
             editTitle.value = blog.title;
@@ -1087,13 +1080,10 @@ async function loadDashboardDymanicContent() {
               "div.delete-article-loader"
             );
             deleteBLoad.style.display = "flex";
-            fetch(
-              `https://jimmy-portfolio-backend.up.railway.app/blogs/${blog._id}`,
-              {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            )
+            fetch(`http://localhost:5000/blogs/${blog._id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            })
               .then(async (response) => {
                 deleteBLoad.style.display = "none";
                 if (response.status === 204) {
@@ -1120,7 +1110,7 @@ async function loadDashboardDymanicContent() {
       }
 
       const newsentMessages = await (
-        await fetch("https://jimmy-portfolio-backend.up.railway.app/messages", {
+        await fetch("http://localhost:5000/messages", {
           headers: { Authorization: `Bearer ${token}` },
         })
       ).json();
@@ -1158,13 +1148,10 @@ async function loadDashboardDymanicContent() {
               "div.delete-message-loader"
             );
             deleteMessageLoad.style.display = "flex";
-            fetch(
-              `https://jimmy-portfolio-backend.up.railway.app/messages/${msg._id}`,
-              {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-              }
-            )
+            fetch(`http://localhost:5000/messages/${msg._id}`, {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
+            })
               .then((response) => {
                 deleteMessageLoad.style.display = "none";
                 document.getElementById("tableMessages").style.display =
@@ -1194,6 +1181,7 @@ async function loadDashboardDymanicContent() {
       return;
     }
   });
+  document.querySelector("div.dashboard-loader").style.display = "none";
 }
 
 function hideTable() {
@@ -1306,7 +1294,7 @@ function contactFormValidation() {
       const loaderEl = document.querySelector("div.loader");
       document.querySelector("#sendMessage").style.display = "none";
       loaderEl.style.display = "flex";
-      await fetch("https://jimmy-portfolio-backend.up.railway.app/messages", {
+      await fetch("http://localhost:5000/messages", {
         method: "POST",
         body: JSON.stringify({
           contName: fullName,
@@ -1378,7 +1366,7 @@ async function loginValidation() {
       document.getElementById("login-form").style.display = "none";
       const loaderEl = document.querySelector("div.login-loader");
       loaderEl.style.display = "flex";
-      fetch("https://jimmy-portfolio-backend.up.railway.app/auth/login", {
+      fetch("http://localhost:5000/auth/login", {
         method: "POST",
         body: JSON.stringify({ email: loginEmail, password: loginPassw }),
         headers: { "Content-Type": "application/json" },
@@ -1389,12 +1377,9 @@ async function loginValidation() {
           if (response.status === 200) {
             const result = await response.json();
             localStorage.setItem("token", result.token);
-            fetch(
-              "https://jimmy-portfolio-backend.up.railway.app/admins/dashboard",
-              {
-                headers: { Authorization: `Bearer ${result.token}` },
-              }
-            )
+            fetch("http://localhost:5000/admins/dashboard", {
+              headers: { Authorization: `Bearer ${result.token}` },
+            })
               .then((isAdmin) => {
                 if (isAdmin.status === 200) {
                   window.location.href = "./dashboard.html";
@@ -1403,8 +1388,8 @@ async function loginValidation() {
                     "You successfully logged in!";
                   loginIcorrectEmailError.style = "display:block; color:red;";
                   setTimeout(() => {
-                    location.href = "./blogs.html";
-                  }, 6000);
+                    location.href = "./index.html";
+                  }, 3000);
                   return false;
                 }
               })
@@ -1522,7 +1507,7 @@ async function adminSignUpValidation() {
       document.getElementById("admin-sign-up-form").style.display = "none";
       const loaderEl = document.querySelector("div.admin-sign-up-loader");
       loaderEl.style.display = "flex";
-      fetch("https://jimmy-portfolio-backend.up.railway.app/admins", {
+      fetch("http://localhost:5000/admins", {
         method: "POST",
         body: JSON.stringify({
           firstName,
@@ -1653,7 +1638,7 @@ async function userSignUpValidation() {
       document.getElementById("user-sign-up-form").style.display = "none";
       const loaderEl = document.querySelector("div.user-signup-loader");
       loaderEl.style.display = "flex";
-      fetch("https://jimmy-portfolio-backend.up.railway.app/users", {
+      fetch("http://localhost:5000/users", {
         method: "POST",
         body: JSON.stringify({
           firstName,
