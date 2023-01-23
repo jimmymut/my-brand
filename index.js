@@ -3,7 +3,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   const profileNameT = document.querySelector("p.loggedin-profile-name");
   const token = localStorage.getItem("token");
   const loggedInUser = await (
-    await fetch(`http://localhost:5000/users/profile`, {
+    await fetch(`https://jimmy-portfolio-backend.up.railway.app/users/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
   ).json();
@@ -24,7 +24,7 @@ genLogout();
 
 async function isLoggedin() {
   const token = localStorage.getItem("token");
-  fetch("http://localhost:5000/users/dashboard", {
+  fetch("https://jimmy-portfolio-backend.up.railway.app/users/dashboard", {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -108,7 +108,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: JSON.stringify({ title: titleEditValue }),
         headers: {
@@ -139,7 +139,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: JSON.stringify({ description: descriptionValue }),
         headers: {
@@ -172,7 +172,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: formDada,
         headers: {
@@ -202,7 +202,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: JSON.stringify({
           title: titleEditValue,
@@ -239,7 +239,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: newFormDada,
         headers: {
@@ -272,7 +272,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: newFormDada,
         headers: {
@@ -306,7 +306,7 @@ async function validateEditArticleForm() {
       ).style.backgroundColor = "white";
       const loaderEl = document.querySelector("div.loader-edit-article");
       loaderEl.style.display = "flex";
-      await fetch(`http://localhost:5000/blogs/${blogId}`, {
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`, {
         method: "PATCH",
         body: formDadaEdit,
         headers: {
@@ -408,7 +408,7 @@ function showAllDashboardBlogs() {
 }
 
 async function createBlogSummary() {
-  const fetchedBlogs = await fetch("http://localhost:5000/blogs");
+  const fetchedBlogs = await fetch("https://jimmy-portfolio-backend.up.railway.app/blogs");
   const blogs = await fetchedBlogs.json();
   if (!blogs || blogs.length === 0) {
     const emptyArticle = document.createElement("p");
@@ -572,7 +572,7 @@ async function validateArticleForm() {
         "white";
       const loaderEl = document.querySelector("div.create-new-article-form");
       loaderEl.style.display = "flex";
-      fetch("http://localhost:5000/blogs", {
+      fetch("https://jimmy-portfolio-backend.up.railway.app/blogs", {
         method: "POST",
         body: formDada,
         headers: {
@@ -665,7 +665,7 @@ async function validateArticleForm() {
               "div.delete-article-loader"
             );
             deleteBLoad.style.display = "flex";
-            fetch(`http://localhost:5000/blogs/${blog._id}`, {
+            fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blog._id}`, {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
             })
@@ -719,7 +719,7 @@ async function likesFunction() {
   const blogURI = window.location.href.split("?:").reverse();
   const blogId = blogURI[0];
   const token = localStorage.getItem("token");
-  fetch(`http://localhost:5000/blogs/${blogId}/likes`, {
+  fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}/likes`, {
     method: "PUT",
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -768,7 +768,7 @@ async function validateComment() {
     }, 6000);
     return false;
   }
-  fetch(`http://localhost:5000/blogs/${blogId}/comments`, {
+  fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}/comments`, {
     method: "post",
     body: JSON.stringify({ comment: mainComment }),
     headers: {
@@ -782,7 +782,7 @@ async function validateComment() {
         const newCmtLi = document.createElement("li");
         const commented = document.createElement("div");
         const commentedUser = await (
-          await fetch(`http://localhost:5000/users/${result.userId}`)
+          await fetch(`https://jimmy-portfolio-backend.up.railway.app/users/${result.userId}`)
         ).json();
         commented.innerHTML = `<h5>${commentedUser}</h5><small>- ${new Date(
           result.commentedAt
@@ -804,7 +804,7 @@ async function validateComment() {
 
         document.querySelector(".full-mode-orderd-list").append(newCmtLi);
 
-        fetch(`http://localhost:5000/blogs/${blogId}/comments/comments`)
+        fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}/comments/comments`)
           .then(async (newRes) => {
             if (newRes.status === 200) {
               const newData = await newRes.json();
@@ -829,7 +829,7 @@ async function validateComment() {
 
 async function logoutFunc() {
   const token = localStorage.getItem("token");
-  await fetch("http://localhost:5000/logout", {
+  await fetch("https://jimmy-portfolio-backend.up.railway.app/logout", {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   })
@@ -845,7 +845,7 @@ async function logoutFunc() {
 async function loadFullBlog() {
   const blogURI = window.location.href.split("?:").reverse();
   const blogId = blogURI[0];
-  const fetchedBlog = await fetch(`http://localhost:5000/blogs/${blogId}`);
+  const fetchedBlog = await fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blogId}`);
   const blog = await fetchedBlog.json();
 
   const blogpost_div = document.querySelector("div.blogpost-div");
@@ -906,7 +906,7 @@ async function loadFullBlog() {
   const blogComments = blog.comments;
   blogComments.forEach(async (cmt) => {
     const commentedUser = await (
-      await fetch(`http://localhost:5000/users/${cmt.userId}`)
+      await fetch(`https://jimmy-portfolio-backend.up.railway.app/users/${cmt.userId}`)
     ).json();
     const olLi = document.createElement("li");
     const commented = document.createElement("div");
@@ -977,11 +977,11 @@ async function loadFullBlog() {
 
 async function loadDashboardDymanicContent() {
   const token = localStorage.getItem("token");
-  fetch("http://localhost:5000/admins/dashboard", {
+  fetch("https://jimmy-portfolio-backend.up.railway.app/admins/dashboard", {
     headers: { Authorization: `Bearer ${token}` },
   }).then(async (response) => {
     if (response.status === 200) {
-      const blogsArrayFetched = await fetch("http://localhost:5000/blogs");
+      const blogsArrayFetched = await fetch("https://jimmy-portfolio-backend.up.railway.app/blogs");
       const blogsArray = await blogsArrayFetched.json();
 
       if (!blogsArray || blogsArray.length === 0) {
@@ -1080,7 +1080,7 @@ async function loadDashboardDymanicContent() {
               "div.delete-article-loader"
             );
             deleteBLoad.style.display = "flex";
-            fetch(`http://localhost:5000/blogs/${blog._id}`, {
+            fetch(`https://jimmy-portfolio-backend.up.railway.app/blogs/${blog._id}`, {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
             })
@@ -1110,7 +1110,7 @@ async function loadDashboardDymanicContent() {
       }
 
       const newsentMessages = await (
-        await fetch("http://localhost:5000/messages", {
+        await fetch("https://jimmy-portfolio-backend.up.railway.app/messages", {
           headers: { Authorization: `Bearer ${token}` },
         })
       ).json();
@@ -1148,7 +1148,7 @@ async function loadDashboardDymanicContent() {
               "div.delete-message-loader"
             );
             deleteMessageLoad.style.display = "flex";
-            fetch(`http://localhost:5000/messages/${msg._id}`, {
+            fetch(`https://jimmy-portfolio-backend.up.railway.app/messages/${msg._id}`, {
               method: "DELETE",
               headers: { Authorization: `Bearer ${token}` },
             })
@@ -1294,7 +1294,7 @@ function contactFormValidation() {
       const loaderEl = document.querySelector("div.loader");
       document.querySelector("#sendMessage").style.display = "none";
       loaderEl.style.display = "flex";
-      await fetch("http://localhost:5000/messages", {
+      await fetch("https://jimmy-portfolio-backend.up.railway.app/messages", {
         method: "POST",
         body: JSON.stringify({
           contName: fullName,
@@ -1366,7 +1366,7 @@ async function loginValidation() {
       document.getElementById("login-form").style.display = "none";
       const loaderEl = document.querySelector("div.login-loader");
       loaderEl.style.display = "flex";
-      fetch("http://localhost:5000/auth/login", {
+      fetch("https://jimmy-portfolio-backend.up.railway.app/auth/login", {
         method: "POST",
         body: JSON.stringify({ email: loginEmail, password: loginPassw }),
         headers: { "Content-Type": "application/json" },
@@ -1377,7 +1377,7 @@ async function loginValidation() {
           if (response.status === 200) {
             const result = await response.json();
             localStorage.setItem("token", result.token);
-            fetch("http://localhost:5000/admins/dashboard", {
+            fetch("https://jimmy-portfolio-backend.up.railway.app/admins/dashboard", {
               headers: { Authorization: `Bearer ${result.token}` },
             })
               .then((isAdmin) => {
@@ -1507,7 +1507,7 @@ async function adminSignUpValidation() {
       document.getElementById("admin-sign-up-form").style.display = "none";
       const loaderEl = document.querySelector("div.admin-sign-up-loader");
       loaderEl.style.display = "flex";
-      fetch("http://localhost:5000/admins", {
+      fetch("https://jimmy-portfolio-backend.up.railway.app/admins", {
         method: "POST",
         body: JSON.stringify({
           firstName,
@@ -1638,7 +1638,7 @@ async function userSignUpValidation() {
       document.getElementById("user-sign-up-form").style.display = "none";
       const loaderEl = document.querySelector("div.user-signup-loader");
       loaderEl.style.display = "flex";
-      fetch("http://localhost:5000/users", {
+      fetch("https://jimmy-portfolio-backend.up.railway.app/users", {
         method: "POST",
         body: JSON.stringify({
           firstName,

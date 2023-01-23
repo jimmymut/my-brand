@@ -966,6 +966,10 @@ div.dashboard-loader {
   display: flex;
 }
 
+div.dashboard-loader strong {
+  color: #000;
+}
+
 #image-edit-preview,
 .image-create-preview {
   width: 150px;
