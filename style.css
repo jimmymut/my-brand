@@ -593,15 +593,22 @@ textarea::placeholder {
 
 .sign-up-form-div {
   max-width: 550px;
+  width: 100%;
+  height: fit-content;
+}
+
+#sign-up-form-div-dash {
+  max-width: 550px;
+  width: 100%;
   height: fit-content;
   background-color: #0a021eb0;
   color: white;
   display: none;
 }
-.sign-up-form-div form {
+#sign-up-form-div-dash form {
   color: white;
 }
-.sign-up-form-div p {
+#sign-up-form-div-dash p {
   width: 100%;
   text-align: center;
   padding-top: 20px;
