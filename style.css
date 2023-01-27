@@ -45,7 +45,7 @@ body {
 }
 
 .swiper {
-  width: 1024px;
+  width: 1200px;
   height: 100%;
 }
 
@@ -1093,7 +1093,7 @@ div.dashboard-loader strong {
   }
 
   .swiper {
-    width: 900px;
+    width: 700px;
   }
 
   .aboutmain-content {
@@ -1235,9 +1235,6 @@ div.dashboard-loader strong {
   #sendMessageForm {
     width: 90%;
   }
-  .swiper {
-    width: 900px;
-  }
   form div input,
   textarea {
     padding: 0.8vw;
@@ -1313,6 +1310,9 @@ div.dashboard-loader strong {
   }
   .aboutmain-content {
     margin-top: 20%;
+  }
+  .swiper {
+    width: 500px;
   }
 
   .technical-skills div,
