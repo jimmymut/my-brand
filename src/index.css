@@ -14,7 +14,7 @@ body {
 }
 
 .landing-main {
-  background-image: url(./Images/fotis-fotopoulos-LJ9KY8pIH3E-unsplash.jpg);
+  background-image: url(./images/fotis-fotopoulos-LJ9KY8pIH3E-unsplash.jpg);
   background-position: center center;
   background-repeat: no-repeat;
   backface-visibility: hidden;
@@ -28,25 +28,37 @@ body {
 
 @keyframes homeslide {
   0% {
-    background-image: url(./Images/fotis-fotopoulos-LJ9KY8pIH3E-unsplash.jpg);
+    background-image: url(./images/fotis-fotopoulos-LJ9KY8pIH3E-unsplash.jpg);
   }
   25% {
-    background-image: url(./Images/fotis-fotopoulos-6sAl6aQ4OWI-unsplash.jpg);
+    background-image: url(./images/fotis-fotopoulos-6sAl6aQ4OWI-unsplash.jpg);
   }
   50% {
-    background-image: url(./Images/walling-e_MdMMKrgdY-unsplash.jpg);
+    background-image: url(./images/walling-e_MdMMKrgdY-unsplash.jpg);
   }
   75% {
-    background-image: url(./Images/christina-wocintechchat-com-6Dv3pe-JnSg-unsplash.jpg);
+    background-image: url(./images/christina-wocintechchat-com-6Dv3pe-JnSg-unsplash.jpg);
   }
   100% {
-    background-image: url(./Images/fotis-fotopoulos-6sAl6aQ4OWI-unsplash.jpg);
+    background-image: url(./images/fotis-fotopoulos-6sAl6aQ4OWI-unsplash.jpg);
   }
 }
 
 .swiper {
-  width: 1200px;
-  height: 100%;
+  width: 300px;
+}
+
+.swiper-slide {
+  background-position: center;
+  background-size: cover;
+}
+
+.swiper-slide img {
+  width: 80%;
+  padding: auto;
+}
+.swiper-slide a {
+cursor: pointer;
 }
 
 .header-div {
@@ -98,9 +110,6 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-.prof-pic-name {
-  display: none;
 }
 
 .landing-hed .owner-sum {
@@ -260,8 +269,9 @@ a.disabled {
 }
 
 #sendMessageForm {
-  width: 500px;
-  height: 500px;
+  width: 450px;
+  min-height: 450px;
+  height: fit-content;
   padding: 2% 5%;
   background-color: white;
   border-radius: 0.5%;
@@ -269,13 +279,13 @@ a.disabled {
 }
 #sendMessage input {
   height: 40px;
-  padding: 0;
-  margin: 0;
+  padding: 5px 15px;
+  margin-top: 20px;
 }
 #sendMessage textarea {
   height: 60px;
-  padding: 0;
-  margin: 0;
+  padding: 5px 15px;
+  margin-top: 20px;
 }
 .contact-btn {
   background: #644dea;
@@ -283,37 +293,16 @@ a.disabled {
   height: 50px;
   border: none;
   margin-top: 38px;
-  font-size: 100%;
+  font-size: 18px;
   color: #ffffff;
   cursor: pointer;
 }
-.popup {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 300px;
-  height: 300px;
-  background-color: #fff;
-  display: none;
-}
-.popup p {
-  width: 80%;
-  align-items: center;
-  padding-bottom: 20px;
-}
 
-.popup button {
-  padding: 10px 60px;
-  color: #fff;
-  background-color: #644dea;
-  border: none;
-  border-radius: 3px;
-  cursor: pointer;
-}
 .contact-form-error {
   color: red;
-  display: none;
+  font-size: 14px;
+  padding: 0;
+  margin-top: 0;
 }
 
 form div input,
@@ -327,12 +316,14 @@ textarea {
   border: 1px solid #ffffff;
   border-radius: 2px;
   background-color: #060113c6;
-  padding: 10px;
+  padding: 5px 15px;
   color: white;
-  font-size: 80%;
+  font-size: 16px;
+  border-radius: 5px;
+  margin-top: 20px;
 }
 form div input {
-  height: 38px;
+  height: 40px;
 }
 
 .dashboard-main {
@@ -431,7 +422,6 @@ form div input {
   margin: auto auto 5% auto;
   margin-top: 10%;
   padding: 20px 0;
-  display: none;
 }
 
 .add-article-form form {
@@ -523,7 +513,12 @@ textarea::placeholder {
   text-align: center;
   margin: 1.5rem;
 }
-
+.empty{
+  color:red;
+  font-size: 36px;
+  width: 100%; 
+  text-align: left;
+}
 .technical-skills,
 .display-last-page {
   display: flex;
@@ -575,7 +570,7 @@ textarea::placeholder {
 
 .login-header {
   text-align: center;
-  margin: 5vw;
+  margin: 30px 0;
 }
 .login-header a {
   text-decoration: none;
@@ -585,38 +580,21 @@ textarea::placeholder {
 .login-div {
   max-width: 400px;
   width: 100%;
-  height: 450px;
   margin: auto;
   background-color: #ffffff;
-  border-radius: 10px;
+  border-radius: 2px;
 }
 
 .sign-up-form-div {
-  max-width: 550px;
+  max-width: 480px;
   width: 100%;
   height: fit-content;
-}
-
-#sign-up-form-div-dash {
-  max-width: 550px;
-  width: 100%;
-  height: fit-content;
-  background-color: #0a021eb0;
-  color: white;
-  display: none;
-}
-#sign-up-form-div-dash form {
-  color: white;
-}
-#sign-up-form-div-dash p {
-  width: 100%;
-  text-align: center;
-  padding-top: 20px;
+  margin-bottom: 50px;
 }
 
 .user-forms {
   color: #000;
-  padding: 5vw;
+  padding: 20px 40px 0 40px;
 }
 
 .user-forms a {
@@ -627,15 +605,6 @@ textarea::placeholder {
 }
 .user-forms button a {
   color: white;
-}
-
-#skills-page2,
-#skills-page3,
-#skills-page4,
-#home-image-2,
-#home-image-3,
-#home-image-4 {
-  display: none;
 }
 
 .portfolio-ol {
@@ -664,10 +633,6 @@ textarea::placeholder {
 }
 .portfolio-link {
   color: turquoise;
-}
-
-.list2 {
-  display: none;
 }
 
 .humberger {
@@ -844,13 +809,14 @@ input:checked ~ .leftdiv {
   background-color: white;
   color: #000;
   height: 400px;
-  display: flex;
+  display: flex !important;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   font-size: 16px;
   border-radius: 20px;
-  margin-left: 10%;
+  padding-bottom: 20px;
+  /* margin-left: 10%; */
 }
 
 .blog-summury-lc {
@@ -905,7 +871,6 @@ input:checked ~ .leftdiv {
   width: 100%;
   margin-top: 10%;
   margin-bottom: 30px;
-  display: none;
   overflow-x: auto;
 }
 table {
@@ -937,8 +902,9 @@ tr {
 
 .loader {
   width: 100%;
-  height: 200px;
+  height: 100%;
   display: flex;
+  flex-direction: row-reverse;
   justify-content: center;
   align-items: center;
   background-color: white;
@@ -947,12 +913,13 @@ tr {
 
 .loader::after {
   content: "";
-  width: 80px;
-  height: 80px;
-  border: 10px solid #dddddd;
+  width: 25px;
+  height: 25px;
+  border: 3px solid #dddddd;
   border-top-color: #000;
   border-radius: 50%;
-  animation: loading 1s ease infinite;
+  margin-right: 12px;
+  animation: loading 1.3s linear infinite;
 }
 @keyframes loading {
   from {
@@ -963,10 +930,6 @@ tr {
   }
 }
 
-.loader {
-  display: none;
-}
-
 div.dashboard-loader {
   width: 100vw;
   height: 100vh;
@@ -975,6 +938,20 @@ div.dashboard-loader {
 
 div.dashboard-loader strong {
   color: #000;
+  font-size: 16px;
+}
+
+.btn-loader{
+  background-color: #644dea;
+  font-size: 15px;
+  height: 80%;
+}
+.btn-loader::after{
+  border-color: #fff;
+  border-top-color: #644dea;
+  width: 15px;
+  height: 15px;
+
 }
 
 #image-edit-preview,
@@ -986,6 +963,29 @@ div.dashboard-loader strong {
 .image-create-preview img {
   width: 100%;
   height: 100%;
+}
+
+.google-button{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0 20px 0;
+}
+
+.or-cont{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.line {
+  border-top: 1px solid #000;
+  width: 30%;
+}
+
+.word {
+  padding: 0 10px;
+  color: black;
 }
 
 @media screen and (max-width: 1048px) {
@@ -1092,9 +1092,9 @@ div.dashboard-loader strong {
     margin-bottom: 90px;
   }
 
-  .swiper {
+  /* .swiper {
     width: 700px;
-  }
+  } */
 
   .aboutmain-content {
     width: 80%;
@@ -1311,9 +1311,9 @@ div.dashboard-loader strong {
   .aboutmain-content {
     margin-top: 20%;
   }
-  .swiper {
+  /* .swiper {
     width: 500px;
-  }
+  } */
 
   .technical-skills div,
   .soft-skills {
