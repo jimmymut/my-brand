@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import Header from "../components/Header";
 import Loader from "../components/Loader";
 import { logoutFunc, getUserProfile } from "../helpers/auth";
@@ -8,18 +7,18 @@ const Work = () => {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const navigate = useNavigate();
   useEffect(()=> {
     getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
-  }, []);
+  }, [setLoading, setUserProfile, setIsLoggedIn]);
   return (
     <div>
       {loading?<Loader className="loader dashboard-loader" message="Loading..." />:
       <div>
         <Header
         isLoggedIn={isLoggedIn}
-        logout={() => logoutFunc(setLoading, setUserProfile, setIsLoggedIn, navigate)}
-        userName={userProfile?.name}
+        logout={() => logoutFunc(setUserProfile, setIsLoggedIn)}
+        userName={userProfile?.firstName}
+        proPic={userProfile?.proPic}
         />
         <h1 className="skills-header">The work I have done so far!</h1>
         <div className="portfolio-ol">

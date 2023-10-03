@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import Header from "../components/Header";
 import Loader from "../components/Loader";
 import { ToastContainer, toast } from "react-toastify";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import commentSchema from "../validations/comment";
 import likeIcon from "../images/Vector.svg";
 import commentIcon from "../images/Vector (1).svg";
+import { logoutFunc, getUserProfile } from "../helpers/auth";
 
 const BlogDetails = () => {
   const [loading, setLoading] = useState(false);
@@ -16,8 +17,10 @@ const BlogDetails = () => {
   const [likes, setLikes] = useState(0);
   const [comments, setComments] = useState([]);
   const [commentLoading, setCommentLoading] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
   const token = localStorage.getItem("token");
-  const blogId = window.location.href.split("?:")[1];
+  const { blogId } = useParams();
   const {
     register,
     handleSubmit,
@@ -31,8 +34,6 @@ const BlogDetails = () => {
     setLoading(true);
     async function loadFullBlog() {
       try {
-        const blogURI = window.location.href.split("?:").reverse();
-        const blogId = blogURI[0];
         const fetchedBlog = await fetch(
           `${process.env.REACT_APP_BASE_URL}/blogs/${blogId}`
         );
@@ -48,7 +49,11 @@ const BlogDetails = () => {
       }
     }
     loadFullBlog();
-  }, []);
+  }, [blogId]);
+
+  useEffect(()=> {
+    getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
+  }, [setLoading, setUserProfile, setIsLoggedIn])
 
   const likesFunction = async () => {
     setLikeLoading(true);
@@ -91,9 +96,10 @@ const BlogDetails = () => {
       .then(async (response) => {
         setCommentLoading(false);
         if (response.status === 200) {
+          const newComments = comments;
           const result = await response.json();
-          comments.push(result);
-          // setComments(newComs);
+          newComments.push(result);
+          setComments(newComments);
           reset();
         } else if (response.status === 401) {
           toast.error(
@@ -115,7 +121,12 @@ const BlogDetails = () => {
       ) : (
         <div>
           <ToastContainer />
-          <Header />
+          <Header
+           isLoggedIn={isLoggedIn}
+           logout={() => logoutFunc(setUserProfile, setIsLoggedIn)}
+           userName={userProfile?.firstName}
+           proPic={userProfile?.proPic}
+          />
 
           {blogData && <div className="blogpost-div">
             <h1 className="blog-header">Blog Post</h1>

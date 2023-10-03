@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Loader from "../components/Loader";
-import Header from "../components/Header";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -9,6 +8,7 @@ import signUpSchema from "../validations/signUp";
 import { ToastContainer, toast } from "react-toastify";
 import GoogleBtn from "../components/GoogleBtn";
 import OrCont from "../components/OrCont";
+import Logo from "../components/Logo";
 
 
 const SignUp = () => {
@@ -34,7 +34,6 @@ const SignUp = () => {
       .then(async (response) => {
         setLoading(false);
         if (response.status === 200) {
-          console.log("signup response", await response.json());
           toast.success("Account created successfully, proceed to login!");
           reset();
         } else if (response.status === 400) {
@@ -57,7 +56,7 @@ const SignUp = () => {
       ) : (
         <div>
           <ToastContainer />
-          <Header />
+          <Logo className="fix-left"/>
           <p className="login-header">
             Already a user? <Link to="/login">Login</Link> or go{" "}
             <Link to="/">Home</Link>

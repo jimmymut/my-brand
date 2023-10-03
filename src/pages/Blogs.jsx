@@ -3,15 +3,18 @@ import Header from "../components/Header";
 import Loader from "../components/Loader";
 import { ToastContainer, toast } from "react-toastify";
 import { Link } from "react-router-dom";
-import "swiper/css/bundle";
 import likeIcon from "../images/Vector.svg";
 import commentIcon from "../images/Vector (1).svg";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFlip, Pagination, Navigation } from "swiper";
+import "swiper/css/bundle";
+import { logoutFunc, getUserProfile } from "../helpers/auth";
 
 const Blogs = () => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [blogs, setBlogs] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     setLoading(true);
@@ -29,6 +32,10 @@ const Blogs = () => {
       });
   }, []);
 
+  useEffect(() => {
+    getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
+  }, [setLoading, setUserProfile, setIsLoggedIn]);
+
   return (
     <div>
       {loading ? (
@@ -36,7 +43,14 @@ const Blogs = () => {
       ) : (
         <div>
           <ToastContainer />
-          <Header />
+          <Header
+            isLoggedIn={isLoggedIn}
+            logout={() =>
+              logoutFunc(setUserProfile, setIsLoggedIn)
+            }
+            userName={userProfile?.firstName}
+            proPic={userProfile?.proPic}
+          />
           <h1 className="blogs-summary-h1">
             <b>Blogs</b>
           </h1>
@@ -57,9 +71,8 @@ const Blogs = () => {
               ) : (
                 blogs.map((blog) => (
                   <SwiperSlide key={blog._id}>
-                    <div className="swiper-slide blog-summary-div">
+                    <div className="blog-summary-div">
                       <img src={blog.file.url} alt="" />
-
                       <div className="artcle blog-summury-lc">
                         <div className="like-coment">
                           <img
@@ -85,14 +98,18 @@ const Blogs = () => {
                             new Date(blog.createdAt).toLocaleString()}
                         </p>
                       </div>
-                      <p className="article-summury" dangerouslySetInnerHTML={{ __html: blog.description.substring(0, 100) + "..." }}></p>
+                      <p
+                        className="article-summury"
+                        dangerouslySetInnerHTML={{
+                          __html: blog.description.substring(0, 100) + "...",
+                        }}
+                      ></p>
                       <Link
-                        to={`/blogs?:${blog._id}`}
-                        target="_blank"
-                        disabled={false}
-                      >
-                        Read More
-                      </Link>
+                      to={`/blogs/${blog._id}`}
+                      target="_blank"
+                    >
+                      Read More
+                    </Link>
                     </div>
                   </SwiperSlide>
                 ))

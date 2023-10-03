@@ -852,7 +852,11 @@ input:checked ~ .leftdiv {
 .blog-summary-div img {
   width: 220px;
   height: 120px;
-  margin-top: 20px;
+  padding-top: 20px;
+}
+
+.blog-summary-div a {
+  padding-bottom: 30px;
 }
 .artcle img {
   width: 30px;
@@ -986,6 +990,12 @@ div.dashboard-loader strong {
 .word {
   padding: 0 10px;
   color: black;
+}
+
+.fix-left{
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 @media screen and (max-width: 1048px) {

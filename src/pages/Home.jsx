@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import HomeHeader from "../components/HomeHeader";
-import { useNavigate } from "react-router-dom";
 import Loader from "../components/Loader";
 import { ToastContainer } from "react-toastify";
 import { logoutFunc, getUserProfile } from "../helpers/auth";
@@ -9,11 +8,10 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
-  const navigate = useNavigate();
   
   useEffect(() => {
     getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
-  }, []);
+  }, [setLoading, setUserProfile, setIsLoggedIn]);
   return (
     <div>
       {loading ? (
@@ -24,8 +22,8 @@ const Home = () => {
           <div className="landing-main">
             <HomeHeader
               isLoggedIn={isLoggedIn}
-              logout={() => logoutFunc(setLoading, setUserProfile, setIsLoggedIn, navigate)}
-              userName={userProfile?.name}
+              logout={() => logoutFunc(setUserProfile, setIsLoggedIn)}
+              userName={userProfile?.firstName}
               proPic={userProfile?.proPic}
             />
             <div className="landing-designdiv">
