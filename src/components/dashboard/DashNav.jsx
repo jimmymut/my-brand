@@ -11,11 +11,6 @@ const DashNav = () => {
             <p>Jimmy's website</p>
           </div>
           <div className="header-status-div">
-            {/* <button className="btn header-btn"
-            // onclick="return displayAdminSignUp();"
-            >
-              Admin Sign Up
-            </button> */}
             <button className="btn header-btn login-btn">Log out</button>
             <div className="prof-pic-name">
               <p className="loggedin-profile-name"></p>

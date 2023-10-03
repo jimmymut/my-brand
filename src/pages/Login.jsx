@@ -8,6 +8,7 @@ import Input from "../components/Input";
 import { ToastContainer, toast } from "react-toastify";
 import GoogleBtn from "../components/GoogleBtn";
 import OrCont from "../components/OrCont";
+import Logo from "../components/Logo";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -69,6 +70,7 @@ const Login = () => {
       ) : (
         <div>
           <ToastContainer />
+          <Logo className="fix-left" />
           <p className="login-header">
             Not user? <Link to="/signup">Sign Up</Link> or go{" "}
             <Link to="/">Home</Link>

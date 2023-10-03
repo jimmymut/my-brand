@@ -39,7 +39,6 @@ const ArticleForm = ({formType, article, setEditData}) => {
       }
 
       const submitHandler = async (data) => {
-        console.log(data)
         const token = localStorage.getItem("token");
         const { title, description, file } = data;
         if(formType !== "add") {

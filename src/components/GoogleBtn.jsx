@@ -20,7 +20,6 @@ const GoogleBtn = ({setGoogleLoading}) => {
               setGoogleLoading(false);
               if (response.status === 200) {
                 const data = await response.json();
-                console.log("user data", data);
                 localStorage.setItem("token", data.token);
                 toast.success("Login succeeded!");
                 return navigate("/");

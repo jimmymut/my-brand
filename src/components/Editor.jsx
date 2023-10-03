@@ -8,19 +8,10 @@ const Editor = ({data, label, id, labelClassName, error, setValue}) => {
             <CKEditor
                 editor={ ClassicEditor }
                 data={data? data: ""}
-                // onReady={ editor => {
-                //     console.log( 'Editor is ready to use!', editor );
-                // } }
                 onChange={ ( event, editor ) => {
                     const data = editor.getData();
                     setValue("description", data);
                 } }
-                // onBlur={ ( event, editor ) => {
-                //     console.log( 'Blur.', editor );
-                // } }
-                // onFocus={ ( event, editor ) => {
-                //     console.log( 'Focus.', editor );
-                // } }
             />
             {error && <small className="input-error contact-form-error">{error.message}</small>}
         </div>
