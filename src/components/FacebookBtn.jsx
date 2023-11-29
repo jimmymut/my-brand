@@ -66,6 +66,7 @@ const FacebookBtn = () => {
         <div className="google-button">
               <LoginSocialFacebook
               appId={process.env.REACT_APP_FB_APP_ID || ''}
+              redirect_uri={process.env.REACT_APP_TWITTER_REDIRECT_URL || ''}
               response_type="code"
               onLoginStart={onLoginStart}
               onResolve={({ provider, data }) => {
