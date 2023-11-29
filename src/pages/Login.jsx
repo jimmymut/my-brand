@@ -9,6 +9,8 @@ import { ToastContainer, toast } from "react-toastify";
 import GoogleBtn from "../components/GoogleBtn";
 import OrCont from "../components/OrCont";
 import Logo from "../components/Logo";
+import FacebookBtn from "../components/FacebookBtn";
+import TwitterBtn from "../components/TwitterBtn";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -106,6 +108,8 @@ const Login = () => {
             </form>
           <OrCont/>
           <GoogleBtn setGoogleLoading={setGoogleLoading} />
+          <FacebookBtn/>
+          <TwitterBtn/>
           </div>
         </div>
       )}
