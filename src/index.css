@@ -134,8 +134,9 @@ cursor: pointer;
 .landing-designdiv {
   background-color: #06011349;
   position: absolute;
-  top: 65%;
-  left: 30%;
+  top: 75%;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 header.landing-hed {
@@ -154,7 +155,7 @@ nav {
 }
 .navdiv a {
   text-decoration: none;
-  padding: 4% 2% 0 2%;
+  padding: 1px 6px;
   font-size: 24px;
 }
 .menu-list {
@@ -162,6 +163,7 @@ nav {
   justify-content: center;
   align-items: center;
   width: 100%;
+  gap: 10px;
 }
 
 header h1 {
@@ -188,17 +190,26 @@ hr {
 }
 .navdiv a:hover {
   color: #dc7633;
-  text-decoration: underline;
   transition: 0.5s;
-  text-transform: uppercase;
 }
 .navdiv a:active {
   color: red;
 }
 
+.active{
+  border-bottom: 1px solid red;
+}
+
 .navdiv a:focus-visible {
   outline-offset: 1px;
   border: 1px solid white;
+}
+
+.homenav{
+  border-top: 1px solid white;
+  border-bottom: 1px solid white;
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .aboutme-pic {
@@ -1016,6 +1027,13 @@ div.dashboard-loader strong {
     display: none;
   }
 
+  .homenav{
+    border-top: none;
+    border-bottom: none;
+    padding-top: none;
+    padding-bottom: none;
+  }
+
   .dash-heading {
     margin-top: 5%;
   }
@@ -1040,6 +1058,10 @@ div.dashboard-loader strong {
     z-index: 1;
     left: -250px;
     top: 0;
+  }
+
+  .landing-designdiv{
+    top: 65%;
   }
 
   .leftdiv a {
@@ -1240,6 +1262,14 @@ div.dashboard-loader strong {
   .socialDiv {
     font-size: 24px;
   }
+
+  .landing-designdiv h1{
+    font-size: 32px;
+  }
+
+  .landing-designdiv{
+    top: 55%;
+  }
 }
 @media screen and (max-width: 600px) {
   #sendMessageForm {
@@ -1278,6 +1308,10 @@ div.dashboard-loader strong {
     max-width: 45vw;
     height: 45vw;
     font-size: 3vw;
+  }
+
+  .landing-designdiv h1{
+    font-size: 24px;
   }
 }
 

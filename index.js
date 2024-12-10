@@ -1,3 +1,6 @@
+const baseUrl = process.env.REACT_APP_BASE_URL;
+console.log('url', baseUrl);
+
 window.addEventListener("DOMContentLoaded", async () => {
   isLoggedin();
   const profileNameT = document.querySelector("p.loggedin-profile-name");

@@ -1,12 +1,10 @@
-import image from "../../images/profile.png";
-
 const DashNav = () => {
     return(
         <div className="header-div">
           <div className="owner-sum">
             <img
               className="owner-profile"
-              src={image}
+              src="/profile.png"
               alt="owner profile pic" />
             <p>Jimmy's website</p>
           </div>

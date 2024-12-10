@@ -1,56 +1,24 @@
-import { useEffect, useState } from "react";
-import Header from "../components/Header";
 import Loader from "../components/Loader";
-import { ToastContainer, toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import likeIcon from "../images/Vector.svg";
 import commentIcon from "../images/Vector (1).svg";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { EffectFlip, Pagination, Navigation } from "swiper";
 import "swiper/css/bundle";
-import { logoutFunc, getUserProfile } from "../helpers/auth";
+import Layout from "../components/Layout";
+import { AppContext } from "../App";
+import { useContext } from "react";
 
 const Blogs = () => {
-  const [loading, setLoading] = useState(true);
-  const [blogs, setBlogs] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
-
-  useEffect(() => {
-    setLoading(true);
-    fetch(`${process.env.REACT_APP_BASE_URL}/blogs`)
-      .then(async (res) => {
-        setLoading(false);
-        if (res.status === 200) {
-          const resBlogs = await res.json();
-          setBlogs(resBlogs);
-        }
-      })
-      .catch((err) => {
-        setLoading(false);
-        toast.error(err.message);
-      });
-  }, []);
-
-  useEffect(() => {
-    getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
-  }, [setLoading, setUserProfile, setIsLoggedIn]);
+  const { state } = useContext(AppContext);
 
   return (
     <div>
-      {loading ? (
+      {state.blogsLoading ? (
         <Loader className="loader dashboard-loader" message="Loading..." />
       ) : (
         <div>
-          <ToastContainer />
-          <Header
-            isLoggedIn={isLoggedIn}
-            logout={() =>
-              logoutFunc(setUserProfile, setIsLoggedIn)
-            }
-            userName={userProfile?.firstName}
-            proPic={userProfile?.proPic}
-          />
+          <Layout>
           <h1 className="blogs-summary-h1">
             <b>Blogs</b>
           </h1>
@@ -63,13 +31,13 @@ const Blogs = () => {
             className="swiper mySwiper"
           >
             <div id="blog-summary-1" className="swiper-wrapper mainblog-summry">
-              {!blogs || !blogs.length ? (
+              {!state.blogs.length ? (
                 <p className="no-data-yet">
                   There is no blog now but we are working hard to add them soon,
                   come back later!
                 </p>
               ) : (
-                blogs.map((blog) => (
+                state.blogs.map((blog) => (
                   <SwiperSlide key={blog._id}>
                     <div className="blog-summary-div">
                       <img src={blog.file.url} alt="" />
@@ -116,6 +84,7 @@ const Blogs = () => {
               )}
             </div>
           </Swiper>
+          </Layout>
         </div>
       )}
     </div>

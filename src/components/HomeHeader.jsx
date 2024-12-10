@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import profilePic from "../images/profile.png";
 import Menu from "./Menu";
 
 const HomeHeader = ({ isLoggedIn, logout, userName, proPic }) => {
@@ -9,7 +8,7 @@ const HomeHeader = ({ isLoggedIn, logout, userName, proPic }) => {
         <div className="owner-sum">
           <img
             className="owner-profile"
-            src={profilePic}
+            src="/profile.png"
             alt="owner profile pic"
           />
           <p>Jimmy's website</p>

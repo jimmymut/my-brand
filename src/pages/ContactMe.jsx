@@ -1,20 +1,16 @@
-import { useState, useEffect } from "react";
-import Header from "../components/Header";
+import { useState } from "react";
 import Loader from "../components/Loader";
 import { Link } from "react-router-dom";
 import Input, { TextArea } from "../components/Input";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import messageSchema from "../validations/message";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import { logoutFunc, getUserProfile } from "../helpers/auth";
+import {  toast } from "react-toastify";
+import Layout from "../components/Layout";
 
 const ContactMe = () => {
-  const [loading, setLoading] = useState(true);
   const [sendLoading, setSendLoading] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -45,25 +41,9 @@ const ContactMe = () => {
       });
   };
 
-  useEffect(() => {
-    getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
-  }, [setLoading, setUserProfile, setIsLoggedIn]);
-
   return (
     <div>
-      {loading ? (
-        <Loader className="loader dashboard-loader" message="Loading..." />
-      ) : (
-        <div>
-          <ToastContainer />
-          <Header
-            isLoggedIn={isLoggedIn}
-            logout={() =>
-              logoutFunc(setUserProfile, setIsLoggedIn)
-            }
-            userName={userProfile?.firstName}
-            proPic={userProfile?.proPic}
-          />
+          <Layout>
           <div className="contacdiv">
             <div className="socialDiv">
               <h3>Contact me on</h3>
@@ -147,9 +127,8 @@ const ContactMe = () => {
               </form>
             </div>
           </div>
+          </Layout>
         </div>
-      )}
-    </div>
   );
 };
 
