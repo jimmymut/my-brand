@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import Input from "../components/Input";
 import signUpSchema from "../validations/signUp";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import GoogleBtn from "../components/GoogleBtn";
 import OrCont from "../components/OrCont";
 import Logo from "../components/Logo";
@@ -32,12 +32,13 @@ const SignUp = () => {
       },
     })
       .then(async (response) => {
+        const data = await response.json();
         setLoading(false);
         if (response.status === 200) {
           toast.success("Account created successfully, proceed to login!");
           reset();
         } else if (response.status === 400) {
-          toast.error("Bad request!");
+          toast.error(data.message);
         } else {
           toast.error("Something went wrong, try again");
         }
@@ -55,7 +56,6 @@ const SignUp = () => {
         <Loader className="loader dashboard-loader" message="Loading..." />
       ) : (
         <div>
-          <ToastContainer />
           <Logo className="fix-left"/>
           <p className="login-header">
             Already a user? <Link to="/login">Login</Link> or go{" "}

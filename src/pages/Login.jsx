@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import loginSchema from "../validations/login";
 import Input from "../components/Input";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import GoogleBtn from "../components/GoogleBtn";
 import OrCont from "../components/OrCont";
 import Logo from "../components/Logo";
@@ -32,36 +32,21 @@ const Login = () => {
       headers: { "Content-Type": "application/json" },
     })
       .then(async (response) => {
+        const result = await response.json();
         if (response.status === 200) {
-          const result = await response.json();
           localStorage.setItem("token", result.token);
-          fetch(`${process.env.REACT_APP_BASE_URL}/admins/dashboard`, {
-            headers: { Authorization: `Bearer ${result.token}` },
-          })
-            .then((isAdmin) => {
-              setLoading(false);
-              if (isAdmin.status === 200) {
-                toast.success("You successfully logged in!");
-                reset();
-                navigate("/dashboard");
-              } else {
-                toast.success("You successfully logged in!");
-                reset();
-                return navigate("/");
-              }
-            })
-            .catch((error) => {
-              console.log(error);
-              toast.error(`Error ${error.message}`);
-              setLoading(false);
-            });
+          toast.success("You successfully logged in!");
+          setLoading(false);
+          reset();
+          if(result.user.title === "admin") return navigate("/dashboard");
+          return navigate("/");
         } else {
-          toast.error(`Email or password is incorrect!`);
+          toast.error(result?.message??`Email or password is incorrect!`);
         }
       })
       .catch((err) => {
         console.log(err);
-        toast.error(`Error ${err.message}`);
+        toast.error(`Error ${err}`);
         setLoading(false);
       });
   };
@@ -71,7 +56,6 @@ const Login = () => {
         <Loader className="loader dashboard-loader" message="Loading..." />
       ) : (
         <div>
-          <ToastContainer />
           <Logo className="fix-left" />
           <p className="login-header">
             Not user? <Link to="/signup">Sign Up</Link> or go{" "}

@@ -10,8 +10,12 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import BlogDetails from "./pages/BlogDetails";
 import SignUp from "./pages/Signup";
+import { useFetchBlogs } from "./hooks/useFetchBlogs";
+import { useFetchProfile } from "./hooks/useFetchProfile";
 
 const AppRoutes = () => {
+    useFetchProfile();
+    useFetchBlogs();
     return(
         <Routes>
             <Route exact path="" element={<Home/>}/>

@@ -1,9 +1,8 @@
-import profilePic from "../images/profile.png";
 
 const Logo = ({ className }) => {
   return (
     <div className={`owner-sum ${className}`}>
-      <img className="owner-profile" src={profilePic} alt="owner profile pic" />
+      <img className="owner-profile" src="/profile.png" alt="owner profile pic" />
       <p>Jimmy's website</p>
     </div>
   );

@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import Header from "../components/Header";
+import { useContext } from "react";
 import Loader from "../components/Loader";
 import htmlIcon from "../images/html-icon.png";
 import cssIcon from "../images/css-icon.png";
@@ -9,33 +8,22 @@ import expressIcon from "../images/express-icon.png";
 import mongoIcon from "../images/mongodb-icon.png";
 import djangoIcon from "../images/django-icon.png";
 import figmaIcon from "../images/figma-icon.png";
-import { logoutFunc, getUserProfile } from "../helpers/auth";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination, Navigation } from "swiper";
 import "swiper/css/bundle";
+import Layout from "../components/Layout";
+import { AppContext } from "../App";
 
 const Skills = () => {
-  const [loading, setLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
+  const { state } = useContext(AppContext);
 
-  useEffect(() => {
-    getUserProfile(setLoading, setUserProfile, setIsLoggedIn);
-  }, [setLoading, setUserProfile, setIsLoggedIn]);
   return (
     <div>
-      {loading ? (
+      {state.skillsLoading ? (
         <Loader className="loader dashboard-loader" message="Loading..." />
       ) : (
         <div>
-          <Header
-            isLoggedIn={isLoggedIn}
-            logout={() =>
-              logoutFunc(setUserProfile, setIsLoggedIn)
-            }
-            userName={userProfile?.firstName}
-            proPic={userProfile?.proPic}
-          />
+          <Layout>
           <h1 id="skills-header">Skills</h1>
           <Swiper
            spaceBetween={30}
@@ -138,6 +126,7 @@ const Skills = () => {
               </div>
             </SwiperSlide>
           </Swiper>
+          </Layout>
         </div>
       )}
     </div>
