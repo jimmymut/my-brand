@@ -74,7 +74,6 @@ const Blogs = () => {
                       ></p>
                       <Link
                       to={`/blogs/${blog._id}`}
-                      target="_blank"
                     >
                       Read More
                     </Link>
