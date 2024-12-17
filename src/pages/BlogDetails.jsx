@@ -145,12 +145,12 @@ const BlogDetails = () => {
               <h3 id="comments">Comments</h3>
               <ol className="full-mode-orderd-list">
                 {blogData.comments.map((comment) => (
-                  <li key={comment._id}>
+                  <li key={comment?._id}>
                     <div>
-                      <h5>{comment.user.firstName}</h5>
+                      <h5>{comment.user?.firstName}</h5>
                       <small>
                         -
-                        {new Date(comment.commentedAt)
+                        {new Date(comment?.commentedAt)
                           .toString()
                           .substring(0, 25)}
                       </small>
