@@ -115,18 +115,47 @@ export default function Dashboard() {
     } else if (k === 'post') {
       const rec = { id: id || uid(), title: f.title.trim(), excerpt: f.excerpt.trim(), tag: f.tag || 'Other', image: f.image || '', date: f.date || today(), body: f.body || [], likeCount: f.likeCount || 0, comments: f.comments || [] }
       setPosts((cur) => (id ? cur.map((p) => (p.id === id ? rec : p)) : [rec, ...cur]))
+      const reconcile = (doc) => {
+        const blog = (doc && (doc.post || doc.blog)) || doc
+        const sid = blog && (blog._id || blog.id)
+        const url = blog && blog.file && blog.file.url
+        if (sid || url) setPosts((cur) => cur.map((p) => (p.id === rec.id ? { ...p, id: sid || p.id, image: url || p.image } : p)))
+      }
       try {
-        const payload = { title: rec.title, excerpt: rec.excerpt, tag: rec.tag, body: rec.body, description: rec.body.join('\n\n') || rec.excerpt, file: rec.image || undefined }
-        if (id) await api.patch(`/blogs/${id}`, payload, true)
-        else { const saved = await api.post('/blogs', payload, true); const sid = saved && (saved._id || saved.id || (saved.blog && saved.blog._id)); if (sid) setPosts((cur) => cur.map((p) => (p.id === rec.id ? { ...p, id: sid } : p))) }
+        if (f.imageFile instanceof File) {
+          // upload the real file (multipart → Cloudinary); avoids huge base64 payloads
+          const fd = new FormData()
+          fd.append('title', rec.title); fd.append('excerpt', rec.excerpt); fd.append('tag', rec.tag)
+          fd.append('date', rec.date); fd.append('body', JSON.stringify(rec.body))
+          fd.append('description', rec.body.join('\n\n') || rec.excerpt)
+          fd.append('file', f.imageFile)
+          reconcile(id ? await api.patchForm(`/blogs/${id}`, fd) : await api.postForm('/blogs', fd))
+        } else {
+          const payload = { title: rec.title, excerpt: rec.excerpt, tag: rec.tag, body: rec.body, description: rec.body.join('\n\n') || rec.excerpt }
+          if (rec.image && !rec.image.startsWith('data:')) payload.file = rec.image // only real URLs, never base64
+          reconcile(id ? await api.patch(`/blogs/${id}`, payload, true) : await api.post('/blogs', payload, true))
+        }
       } catch {}
     } else if (k === 'skill') {
       const rec = { id: id || uid(), name: f.name.trim(), desc: f.desc || '', level: f.level, icon: f.icon || '' }
       setSkills((cur) => (id ? cur.map((s) => (s.id === id ? rec : s)) : [...cur, rec]))
+      const reconcile = (doc) => {
+        const sk = (doc && (doc.newSkill || doc.updatedSkill)) || doc
+        const sid = sk && (sk._id || sk.id)
+        const url = sk && sk.icon
+        if (sid || url) setSkills((cur) => cur.map((s) => (s.id === rec.id ? { ...s, id: sid || s.id, icon: url || s.icon } : s)))
+      }
       try {
-        const payload = { name: rec.name, desc: rec.desc, summary: rec.desc, level: rec.level, icon: rec.icon || undefined }
-        if (id) await api.patch(`/skills/${id}`, payload, true)
-        else { const saved = await api.post('/skills', payload, true); const sid = saved && saved.newSkill && saved.newSkill._id; if (sid) setSkills((cur) => cur.map((s) => (s.id === rec.id ? { ...s, id: sid } : s))) }
+        if (f.iconFile instanceof File) {
+          const fd = new FormData()
+          fd.append('name', rec.name); fd.append('desc', rec.desc); fd.append('summary', rec.desc); fd.append('level', String(rec.level))
+          fd.append('icon', f.iconFile)
+          reconcile(id ? await api.patchForm(`/skills/${id}`, fd) : await api.postForm('/skills', fd))
+        } else {
+          const payload = { name: rec.name, desc: rec.desc, summary: rec.desc, level: rec.level }
+          if (rec.icon && !rec.icon.startsWith('data:')) payload.icon = rec.icon
+          reconcile(id ? await api.patch(`/skills/${id}`, payload, true) : await api.post('/skills', payload, true))
+        }
       } catch {}
     } else if (k === 'work') {
       const rec = { id: id || uid(), title: f.title.trim(), desc: f.desc || '', start: f.start || '', end: f.end || '', link: (f.link || '').trim() }

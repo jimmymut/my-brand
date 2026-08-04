@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
 import { useTheme } from '../context/ThemeContext'
@@ -61,6 +61,14 @@ export default function Auth({ mode }) {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
   const isLoginReg = stage === 'login' || stage === 'register'
   const goStage = (s) => { setStage(s); setErr(''); setNotice('') }
+
+  // Keep the visible stage in sync with the route (/login vs /register) — React
+  // reuses this component instance across those two routes, so the mode prop
+  // changes without a remount.
+  useEffect(() => {
+    setStage(mode === 'register' ? 'register' : 'login')
+    setForm({}); setErr(''); setNotice('')
+  }, [mode])
 
   /* ----------------------------------------------------------- login/reg */
   const submit = async () => {
@@ -184,7 +192,7 @@ export default function Auth({ mode }) {
                 <h2 style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 26, color: 'var(--strong)', marginBottom: 6 }}>{stage === 'register' ? 'Sign up' : 'Log in'}</h2>
                 <p style={{ fontSize: 14, color: 'var(--muted2)', marginBottom: 20 }}>
                   {stage === 'register' ? 'Already have an account?' : 'New here?'}{' '}
-                  <button onClick={() => { setForm({}); goStage(stage === 'register' ? 'login' : 'register') }} style={{ border: 'none', background: 'none', color: '#1FA779', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>{stage === 'register' ? 'Log in' : 'Create one'}</button>
+                  <button onClick={() => navigate(stage === 'register' ? '/login' : '/register')} style={{ border: 'none', background: 'none', color: '#1FA779', fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>{stage === 'register' ? 'Log in' : 'Create one'}</button>
                 </p>
 
                 {GOOGLE_CLIENT_ID

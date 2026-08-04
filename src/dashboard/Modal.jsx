@@ -51,8 +51,9 @@ export default function Modal({ kind, edit, initial, onClose, onSave }) {
     const file = e.target.files && e.target.files[0]
     if (!file) return
     const r = new FileReader()
-    r.onload = () => set(key, r.result)
+    r.onload = () => set(key, r.result) // data URL — preview only
     r.readAsDataURL(file)
+    set(key + 'File', file)             // raw File — uploaded via multipart on save
   }
 
   const submit = () => {
