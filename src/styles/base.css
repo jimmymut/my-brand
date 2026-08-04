@@ -1,0 +1,39 @@
+/* Global reset + base — mirrors the prototype's head styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+html, body, #root {
+  background: var(--bg, #0A0E17);
+  color: var(--text, #EAF0F7);
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body { overflow-x: hidden; }
+::selection { background: #34D399; color: #04110B; }
+a { color: inherit; text-decoration: none; }
+input, textarea, button, select { font-family: inherit; color: inherit; }
+input[type=date], input[type=number], input[type=month] { color-scheme: light dark; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 8px; }
+
+@keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+@keyframes heroSlide { 0%, 100% { opacity: 0; } 4%, 29% { opacity: 1; } 33% { opacity: 0; } }
+@keyframes pop { 0% { opacity: 0; transform: scale(0.96) translateY(8px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+
+@media print {
+  aside, .noprint { display: none !important; }
+  .dash-main { display: block !important; }
+}
+
+/* Dashboard sidebar responsive behaviour (from prototype) */
+.dash-hamburger { display: none; }
+.dash-backdrop { display: none; }
+@media (max-width: 920px) {
+  .dash-sidebar {
+    position: fixed !important; top: 0 !important; left: -280px !important;
+    height: 100vh !important; z-index: 90; box-shadow: 0 0 50px rgba(0,0,0,0.45);
+  }
+  .dash-sidebar[data-open="true"] { left: 0 !important; }
+  .dash-hamburger { display: flex !important; }
+  .dash-backdrop[data-open="true"] { display: block !important; }
+}

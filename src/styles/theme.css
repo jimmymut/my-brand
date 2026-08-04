@@ -1,0 +1,53 @@
+/*
+ * Theme tokens — preserved verbatim from the two design prototypes.
+ * The public site and the dashboard ship slightly different palettes,
+ * so each is scoped under its own root class. The active mode
+ * (dark / light / system) is driven by the data-theme attribute that
+ * the ThemeProvider writes onto these wrappers.
+ */
+
+/* ---------------------------------------------------------------- SITE */
+.scope-site[data-theme="dark"],
+.scope-site[data-theme="system"] {
+  --bg: #0A0E17; --surface: #0E1422; --surface2: #121A2B; --input: #0B1120;
+  --text: #EAF0F7; --strong: #FFFFFF; --text2: #C7D0DD; --muted: #A6B2C4; --muted2: #8593A6; --muted3: #66728A; --muted4: #566173;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.13); --fill: rgba(255,255,255,0.05); --hover: rgba(255,255,255,0.09);
+  --navbg: rgba(10,14,23,0.66); --overlay: rgba(6,9,16,0.72); --shadow: rgba(0,0,0,0.5); --grid: rgba(180,190,210,0.05);
+}
+.scope-site[data-theme="light"] {
+  --bg: #EDF0F6; --surface: #FFFFFF; --surface2: #FFFFFF; --input: #F1F4FA;
+  --text: #1B2335; --strong: #0A1020; --text2: #33405A; --muted: #5C6B82; --muted2: #7C889C; --muted3: #9AA6B8; --muted4: #AEB8C7;
+  --border: rgba(16,24,40,0.10); --border2: rgba(16,24,40,0.16); --fill: rgba(16,24,40,0.035); --hover: rgba(16,24,40,0.07);
+  --navbg: rgba(237,240,246,0.78); --overlay: rgba(15,23,42,0.42); --shadow: rgba(16,24,40,0.16); --grid: rgba(40,50,70,0.05);
+}
+@media (prefers-color-scheme: light) {
+  .scope-site[data-theme="system"] {
+    --bg: #EDF0F6; --surface: #FFFFFF; --surface2: #FFFFFF; --input: #F1F4FA;
+    --text: #1B2335; --strong: #0A1020; --text2: #33405A; --muted: #5C6B82; --muted2: #7C889C; --muted3: #9AA6B8; --muted4: #AEB8C7;
+    --border: rgba(16,24,40,0.10); --border2: rgba(16,24,40,0.16); --fill: rgba(16,24,40,0.035); --hover: rgba(16,24,40,0.07);
+    --navbg: rgba(237,240,246,0.78); --overlay: rgba(15,23,42,0.42); --shadow: rgba(16,24,40,0.16); --grid: rgba(40,50,70,0.05);
+  }
+}
+
+/* ----------------------------------------------------------- DASHBOARD */
+.scope-dash[data-theme="dark"],
+.scope-dash[data-theme="system"] {
+  --bg: #0B0F1A; --sidebar: #0C111D; --surface: #0E1422; --surface2: #121A2B; --input: #0B1120;
+  --text: #EAF0F7; --strong: #FFFFFF; --text2: #C7D0DD; --muted: #9CA8BA; --muted2: #7E8A9C; --muted3: #66728A; --muted4: #566173;
+  --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12); --fill: rgba(255,255,255,0.045); --hover: rgba(255,255,255,0.09);
+  --overlay: rgba(6,9,16,0.72); --shadow: rgba(0,0,0,0.5);
+}
+.scope-dash[data-theme="light"] {
+  --bg: #EDF0F6; --sidebar: #FFFFFF; --surface: #FFFFFF; --surface2: #FFFFFF; --input: #F1F4FA;
+  --text: #1B2335; --strong: #0A1020; --text2: #33405A; --muted: #5C6B82; --muted2: #7C889C; --muted3: #9AA6B8; --muted4: #AEB8C7;
+  --border: rgba(16,24,40,0.10); --border2: rgba(16,24,40,0.16); --fill: rgba(16,24,40,0.035); --hover: rgba(16,24,40,0.07);
+  --overlay: rgba(15,23,42,0.42); --shadow: rgba(16,24,40,0.16);
+}
+@media (prefers-color-scheme: light) {
+  .scope-dash[data-theme="system"] {
+    --bg: #EDF0F6; --sidebar: #FFFFFF; --surface: #FFFFFF; --surface2: #FFFFFF; --input: #F1F4FA;
+    --text: #1B2335; --strong: #0A1020; --text2: #33405A; --muted: #5C6B82; --muted2: #7C889C; --muted3: #9AA6B8; --muted4: #AEB8C7;
+    --border: rgba(16,24,40,0.10); --border2: rgba(16,24,40,0.16); --fill: rgba(16,24,40,0.035); --hover: rgba(16,24,40,0.07);
+    --overlay: rgba(15,23,42,0.42); --shadow: rgba(16,24,40,0.16);
+  }
+}
