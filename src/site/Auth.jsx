@@ -173,9 +173,7 @@ export default function Auth({ mode }) {
               <h2 style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 32, lineHeight: 1.15, letterSpacing: '-0.02em', marginBottom: 14 }}>{brand.title}</h2>
               <p style={{ fontSize: 15, lineHeight: 1.6, color: '#A6B2C4' }}>{brand.sub}</p>
             </div>
-            <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 12.5, color: '#6EE7B7', background: 'rgba(52,211,153,0.10)', border: '1px solid rgba(52,211,153,0.25)', borderRadius: 10, padding: '11px 13px' }}>
-              Owner demo · jimmy<span>@</span>jmt.rw · pass: admin123
-            </div>
+            <div />
           </div>
 
           {/* form panel */}
