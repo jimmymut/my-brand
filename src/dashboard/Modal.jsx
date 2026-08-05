@@ -44,8 +44,17 @@ function Pills({ options, value, onPick }) {
 export default function Modal({ kind, edit, initial, onClose, onSave, onRemove }) {
   const [f, setF] = useState(() => ({ ...initial }))
   const [err, setErr] = useState({})
+  const [saving, setSaving] = useState(false)
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
   const onInput = (k) => (e) => set(k, e.target.value)
+
+  // Await the backend before closing; on failure onSave returns false and the
+  // modal stays open (a toast explains) — nothing is shown as saved unless it was.
+  const commit = async (payload) => {
+    setSaving(true)
+    const ok = await onSave(payload)
+    if (ok === false) setSaving(false) // otherwise the modal unmounts on success
+  }
 
   const readImage = (key, e) => {
     const file = e.target.files && e.target.files[0]
@@ -63,34 +72,34 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove }
       if (!String(f.name || '').trim()) e.name = 'Name is required'
       if (!amt || amt < 0) e.amount = 'Enter a valid cost'
       if (Object.keys(e).length) return setErr(e)
-      return onSave({ ...f, name: f.name.trim(), amount: amt })
+      return commit({ ...f, name: f.name.trim(), amount: amt })
     }
     if (kind === 'post') {
       if (!String(f.title || '').trim()) e.title = 'Title is required'
       if (!String(f.excerpt || '').trim()) e.excerpt = 'Excerpt is required'
       if (f.tag === 'Other' && !String(f.customTopic || '').trim()) e.customTopic = 'Please specify the topic'
       if (Object.keys(e).length) return setErr(e)
-      return onSave({ ...f, tag: f.tag === 'Other' ? f.customTopic.trim() : f.tag })
+      return commit({ ...f, tag: f.tag === 'Other' ? f.customTopic.trim() : f.tag })
     }
     if (kind === 'skill') {
       if (!String(f.name || '').trim()) return setErr({ name: 'Skill name is required' })
-      return onSave({ ...f, level: Math.max(0, Math.min(100, parseInt(f.level, 10) || 0)) })
+      return commit({ ...f, level: Math.max(0, Math.min(100, parseInt(f.level, 10) || 0)) })
     }
     if (kind === 'work') {
       if (!String(f.title || '').trim()) return setErr({ title: 'Title is required' })
-      return onSave({ ...f })
+      return commit({ ...f })
     }
     if (kind === 'debt') {
       const amt = parseFloat(String(f.amount == null ? '' : f.amount).replace(/[^0-9.]/g, ''))
       if (!String(f.name || '').trim()) e.name = (f.direction === 'lent' ? 'Borrower' : 'Lender') + ' name is required'
       if (!amt || amt <= 0) e.amount = 'Enter a valid amount'
       if (Object.keys(e).length) return setErr(e)
-      return onSave({ ...f, name: f.name.trim(), amount: amt, direction: f.direction || 'borrowed' })
+      return commit({ ...f, name: f.name.trim(), amount: amt, direction: f.direction || 'borrowed' })
     }
     if (kind === 'debtPayment') {
       const amt = parseFloat(String(f.amount == null ? '' : f.amount).replace(/[^0-9.]/g, ''))
       if (!amt || amt <= 0) return setErr({ amount: 'Enter a valid amount' })
-      return onSave({ ...f, amount: amt })
+      return commit({ ...f, amount: amt })
     }
     // finance
     const amt = parseFloat(String(f.amount == null ? '' : f.amount).replace(/[^0-9.]/g, ''))
@@ -98,7 +107,7 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove }
     if (kind === 'expense' && f.category === 'other' && !String(f.desc || '').trim()) e.desc = 'Description is required for the “Other” category'
     if (kind === 'saving' && !f.bucket) e.bucket = 'Choose a goal'
     if (Object.keys(e).length) return setErr(e)
-    onSave({ ...f, amount: amt })
+    commit({ ...f, amount: amt })
   }
 
   const saveLabel = edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
@@ -298,10 +307,10 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove }
 
         <div style={{ display: 'flex', gap: 12 }}>
           {kind === 'saving' && edit && onRemove && (
-            <button onClick={onRemove} title="Clear this month" style={{ padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(251,113,133,0.35)', background: 'rgba(251,113,133,0.10)', color: '#E5577A', fontSize: 14.5, fontWeight: 700, cursor: 'pointer' }}>Remove</button>
+            <button onClick={onRemove} disabled={saving} title="Clear this month" style={{ padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(251,113,133,0.35)', background: 'rgba(251,113,133,0.10)', color: '#E5577A', fontSize: 14.5, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}>Remove</button>
           )}
-          <button onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--text2)', fontSize: 14.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={submit} style={{ flex: 1.4, padding: 13, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#34D399,#10B981)', color: '#04110B', fontSize: 14.5, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 20px rgba(16,185,129,0.3)' }}>{saveLabel}</button>
+          <button onClick={onClose} disabled={saving} style={{ flex: 1, padding: 13, borderRadius: 12, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--text2)', fontSize: 14.5, fontWeight: 700, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.6 : 1 }}>Cancel</button>
+          <button onClick={submit} disabled={saving} style={{ flex: 1.4, padding: 13, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#34D399,#10B981)', color: '#04110B', fontSize: 14.5, fontWeight: 700, cursor: saving ? 'default' : 'pointer', boxShadow: '0 8px 20px rgba(16,185,129,0.3)', opacity: saving ? 0.75 : 1 }}>{saving ? 'Saving…' : saveLabel}</button>
         </div>
       </div>
     </div>

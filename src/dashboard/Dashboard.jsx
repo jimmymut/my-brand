@@ -8,6 +8,7 @@ import { BUCKETS, CATS, CURRENT, MONTHS } from '../lib/constants'
 import { monthLabel, today, uid } from '../lib/format'
 import { Posts, Skills, Work, Messages } from '../api/resources'
 import { api } from '../api/client'
+import { useToast } from '../components/Toast'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import Modal from './Modal'
@@ -42,12 +43,20 @@ export default function Dashboard() {
   const [work, setWork] = useState([])
   const [messages, setMessages] = useState([])
 
-  useEffect(() => {
+  const toast = useToast()
+  const refetchContent = () => {
     Posts.list().then((p) => setPosts(p || [])).catch(() => {})
     Skills.list().then((s) => setSkills(s || [])).catch(() => {})
     Work.list().then((w) => setWork(w || [])).catch(() => {})
     Messages.list().then((m) => setMessages(m || [])).catch(() => {})
-  }, [])
+  }
+  // surface a failed content write (401/expiry is handled globally)
+  const contentFailed = (what, e) => {
+    if (!(e && e.status === 401)) toast(`Couldn't save your ${what}. Please check your connection and try again.`, 'error')
+    refetchContent()
+  }
+
+  useEffect(() => { refetchContent() }, [])
 
   const derived = useMemo(
     () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems }, { range, selMonth, txFilter }),
@@ -103,82 +112,80 @@ export default function Dashboard() {
   const openDebtPayment = (row) => openModal('debtPayment', null, { debtId: row.id, _party: row.party, _remainingStr: row.remainingStr })
 
   /* ---------------------------------------------------------- modal save */
+  // Confirm-first: wait for the backend, apply the saved record, then close the
+  // modal. On failure the modal stays open (a toast explains) so nothing shows
+  // as "added" that wasn't actually persisted. Returns true only on success.
+  const CONTENT_LABEL = { post: 'article', skill: 'skill', work: 'experience' }
   const onSave = async (f) => {
     const k = modal.kind
     const id = f._id
-    if (k === 'income' || k === 'expense') {
-      fin.saveTx({ id, kind: k, amount: f.amount, category: k === 'expense' ? f.category : null, desc: f.desc || '', date: f.date })
-    } else if (k === 'saving') {
-      fin.saveContrib({ id, bucket: f.bucket, amount: f.amount, month: f.month, date: f.date, account: f.account || '', kind: f.kind || 'deposit' })
-    } else if (k === 'budgetItem') {
-      fin.saveBudgetItem({ id, name: f.name, amount: f.amount, spent: f.spent != null ? f.spent : 0, priority: f.priority || 'low' })
-    } else if (k === 'post') {
-      const rec = { id: id || uid(), title: f.title.trim(), excerpt: f.excerpt.trim(), tag: f.tag || 'Other', image: f.image || '', date: f.date || today(), body: f.body || [], likeCount: f.likeCount || 0, comments: f.comments || [] }
-      setPosts((cur) => (id ? cur.map((p) => (p.id === id ? rec : p)) : [rec, ...cur]))
-      const reconcile = (doc) => {
-        const blog = (doc && (doc.post || doc.blog)) || doc
-        const sid = blog && (blog._id || blog.id)
-        const url = blog && blog.file && blog.file.url
-        if (sid || url) setPosts((cur) => cur.map((p) => (p.id === rec.id ? { ...p, id: sid || p.id, image: url || p.image } : p)))
-      }
-      try {
+    try {
+      if (k === 'income' || k === 'expense') {
+        await fin.saveTx({ id, kind: k, amount: f.amount, category: k === 'expense' ? f.category : null, desc: f.desc || '', date: f.date })
+      } else if (k === 'saving') {
+        await fin.saveContrib({ id, bucket: f.bucket, amount: f.amount, month: f.month, date: f.date, account: f.account || '', kind: f.kind || 'deposit' })
+      } else if (k === 'budgetItem') {
+        await fin.saveBudgetItem({ id, name: f.name, amount: f.amount, spent: f.spent != null ? f.spent : 0, priority: f.priority || 'low' })
+      } else if (k === 'post') {
+        const base = { title: f.title.trim(), excerpt: f.excerpt.trim(), tag: f.tag || 'Other', image: f.image || '', date: f.date || today(), body: f.body || [], likeCount: f.likeCount || 0, comments: f.comments || [] }
+        let doc
         if (f.imageFile instanceof File) {
-          // upload the real file (multipart → Cloudinary); avoids huge base64 payloads
           const fd = new FormData()
-          fd.append('title', rec.title); fd.append('excerpt', rec.excerpt); fd.append('tag', rec.tag)
-          fd.append('date', rec.date); fd.append('body', JSON.stringify(rec.body))
-          fd.append('description', rec.body.join('\n\n') || rec.excerpt)
+          fd.append('title', base.title); fd.append('excerpt', base.excerpt); fd.append('tag', base.tag)
+          fd.append('date', base.date); fd.append('body', JSON.stringify(base.body))
+          fd.append('description', base.body.join('\n\n') || base.excerpt)
           fd.append('file', f.imageFile)
-          reconcile(id ? await api.patchForm(`/blogs/${id}`, fd) : await api.postForm('/blogs', fd))
+          doc = id ? await api.patchForm(`/blogs/${id}`, fd) : await api.postForm('/blogs', fd)
         } else {
-          const payload = { title: rec.title, excerpt: rec.excerpt, tag: rec.tag, body: rec.body, description: rec.body.join('\n\n') || rec.excerpt }
-          if (rec.image && !rec.image.startsWith('data:')) payload.file = rec.image // only real URLs, never base64
-          reconcile(id ? await api.patch(`/blogs/${id}`, payload, true) : await api.post('/blogs', payload, true))
+          const payload = { title: base.title, excerpt: base.excerpt, tag: base.tag, body: base.body, description: base.body.join('\n\n') || base.excerpt }
+          if (base.image && !base.image.startsWith('data:')) payload.file = base.image
+          doc = id ? await api.patch(`/blogs/${id}`, payload, true) : await api.post('/blogs', payload, true)
         }
-      } catch {}
-    } else if (k === 'skill') {
-      const rec = { id: id || uid(), name: f.name.trim(), desc: f.desc || '', level: f.level, icon: f.icon || '' }
-      setSkills((cur) => (id ? cur.map((s) => (s.id === id ? rec : s)) : [...cur, rec]))
-      const reconcile = (doc) => {
-        const sk = (doc && (doc.newSkill || doc.updatedSkill)) || doc
-        const sid = sk && (sk._id || sk.id)
-        const url = sk && sk.icon
-        if (sid || url) setSkills((cur) => cur.map((s) => (s.id === rec.id ? { ...s, id: sid || s.id, icon: url || s.icon } : s)))
-      }
-      try {
+        const blog = (doc && (doc.post || doc.blog)) || doc
+        const rec = { ...base, id: (blog && (blog._id || blog.id)) || id || uid(), image: (blog && blog.file && blog.file.url) || (base.image && !base.image.startsWith('data:') ? base.image : '') }
+        setPosts((cur) => (id ? cur.map((p) => (p.id === id ? rec : p)) : [rec, ...cur]))
+      } else if (k === 'skill') {
+        const base = { name: f.name.trim(), desc: f.desc || '', level: f.level, icon: f.icon || '' }
+        let doc
         if (f.iconFile instanceof File) {
           const fd = new FormData()
-          fd.append('name', rec.name); fd.append('desc', rec.desc); fd.append('summary', rec.desc); fd.append('level', String(rec.level))
-          fd.append('icon', f.iconFile)
-          reconcile(id ? await api.patchForm(`/skills/${id}`, fd) : await api.postForm('/skills', fd))
+          fd.append('name', base.name); fd.append('desc', base.desc); fd.append('summary', base.desc); fd.append('level', String(base.level)); fd.append('icon', f.iconFile)
+          doc = id ? await api.patchForm(`/skills/${id}`, fd) : await api.postForm('/skills', fd)
         } else {
-          const payload = { name: rec.name, desc: rec.desc, summary: rec.desc, level: rec.level }
-          if (rec.icon && !rec.icon.startsWith('data:')) payload.icon = rec.icon
-          reconcile(id ? await api.patch(`/skills/${id}`, payload, true) : await api.post('/skills', payload, true))
+          const payload = { name: base.name, desc: base.desc, summary: base.desc, level: base.level }
+          if (base.icon && !base.icon.startsWith('data:')) payload.icon = base.icon
+          doc = id ? await api.patch(`/skills/${id}`, payload, true) : await api.post('/skills', payload, true)
         }
-      } catch {}
-    } else if (k === 'work') {
-      const rec = { id: id || uid(), title: f.title.trim(), desc: f.desc || '', start: f.start || '', end: f.end || '', link: (f.link || '').trim() }
-      setWork((cur) => (id ? cur.map((w) => (w.id === id ? rec : w)) : [...cur, rec]))
-      try {
-        const payload = { title: rec.title, desc: rec.desc, body: rec.desc, start: rec.start, end: rec.end, link: rec.link }
-        if (id) await api.patch(`/works/${id}`, payload, true)
-        else { const saved = await api.post('/works', payload, true); const sid = saved && saved.newWork && saved.newWork._id; if (sid) setWork((cur) => cur.map((w) => (w.id === rec.id ? { ...w, id: sid } : w))) }
-      } catch {}
-    } else if (k === 'debt') {
-      debtStore.saveDebt({ id, direction: f.direction || 'borrowed', name: f.name, amount: f.amount, date: f.date, due: f.due || '', desc: f.desc || '' })
-    } else if (k === 'debtPayment') {
-      debtStore.addPayment(f.debtId, { amount: f.amount, date: f.date })
+        const sk = (doc && (doc.newSkill || doc.updatedSkill)) || doc
+        const rec = { name: base.name, desc: base.desc, level: base.level, id: (sk && (sk._id || sk.id)) || id || uid(), icon: (sk && sk.icon) || (base.icon && !base.icon.startsWith('data:') ? base.icon : '') }
+        setSkills((cur) => (id ? cur.map((s) => (s.id === id ? rec : s)) : [...cur, rec]))
+      } else if (k === 'work') {
+        const base = { title: f.title.trim(), desc: f.desc || '', start: f.start || '', end: f.end || '', link: (f.link || '').trim() }
+        const payload = { title: base.title, desc: base.desc, body: base.desc, start: base.start, end: base.end, link: base.link }
+        const doc = id ? await api.patch(`/works/${id}`, payload, true) : await api.post('/works', payload, true)
+        const w = (doc && (doc.newWork || doc.updatedWork)) || doc
+        const rec = { ...base, id: (w && (w._id || w.id)) || id || uid() }
+        setWork((cur) => (id ? cur.map((x) => (x.id === id ? rec : x)) : [...cur, rec]))
+      } else if (k === 'debt') {
+        await debtStore.saveDebt({ id, direction: f.direction || 'borrowed', name: f.name, amount: f.amount, date: f.date, due: f.due || '', desc: f.desc || '' })
+      } else if (k === 'debtPayment') {
+        await debtStore.addPayment(f.debtId, { amount: f.amount, date: f.date })
+      }
+      setModal(null)
+      return true
+    } catch (e) {
+      // finance/debt stores toast themselves; content writes toast here
+      if (CONTENT_LABEL[k]) contentFailed(CONTENT_LABEL[k], e)
+      return false // keep the modal open
     }
-    setModal(null)
   }
 
   /* ----------------------------------------------------------- deletions */
-  const deletePost = (pid) => { setPosts((c) => c.filter((p) => p.id !== pid)); Posts.remove(pid).catch(() => {}) }
-  const deleteSkill = (sid) => { setSkills((c) => c.filter((s) => s.id !== sid)); Skills.remove(sid).catch(() => {}) }
-  const deleteWork = (wid) => { setWork((c) => c.filter((w) => w.id !== wid)); Work.remove(wid).catch(() => {}) }
-  const deleteMessage = (mid) => { setMessages((c) => c.filter((m) => m.id !== mid)); Messages.remove(mid).catch(() => {}) }
-  const toggleRead = (m) => { setMessages((c) => c.map((x) => (x.id === m.id ? { ...x, read: !x.read } : x))); Messages.toggleRead(m.id).catch(() => {}) }
+  const deletePost = (pid) => { setPosts((c) => c.filter((p) => p.id !== pid)); Posts.remove(pid).catch(() => contentFailed('change')) }
+  const deleteSkill = (sid) => { setSkills((c) => c.filter((s) => s.id !== sid)); Skills.remove(sid).catch(() => contentFailed('change')) }
+  const deleteWork = (wid) => { setWork((c) => c.filter((w) => w.id !== wid)); Work.remove(wid).catch(() => contentFailed('change')) }
+  const deleteMessage = (mid) => { setMessages((c) => c.filter((m) => m.id !== mid)); Messages.remove(mid).catch(() => contentFailed('change')) }
+  const toggleRead = (m) => { setMessages((c) => c.map((x) => (x.id === m.id ? { ...x, read: !x.read } : x))); Messages.toggleRead(m.id).catch(() => contentFailed('change')) }
 
   /* --------------------------------------------------------------- export */
   const download = (name, text) => {

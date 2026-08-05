@@ -43,6 +43,11 @@ async function request(path, { method = 'GET', body, auth = false, isForm = fals
     const err = new Error(typeof msg === 'string' ? msg : 'Request failed')
     err.status = res.status
     err.data = data
+    // An expired/invalid token on an authenticated request → tell the app to
+    // end the session (handled centrally in AuthContext).
+    if (res.status === 401 && auth && typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('jmt:unauthorized', { detail: msg }))
+    }
     throw err
   }
   return data

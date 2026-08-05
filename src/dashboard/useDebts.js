@@ -1,56 +1,60 @@
 import { useCallback, useEffect, useState } from 'react'
 import { uid } from '../lib/format'
 import { Finance } from '../api/resources'
+import { useToast } from '../components/Toast'
 
 /*
- * Debt store — backend only, no seed/mock fallback. Empty stays empty.
- * Mutations are optimistic with a write-through to the API and id reconciliation
- * on create so later edits / deletes / payments hit the real document.
+ * Debt store — backend only. Modal-driven writes (add/edit a debt, record a
+ * payment) are confirm-first: await the backend, then reflect the saved record,
+ * so nothing shows unless it persisted. Delete stays optimistic + re-sync.
  */
 export function useDebts() {
+  const toast = useToast()
   const [debts, setDebts] = useState([])
+
+  const resync = useCallback(() => { Finance.debts().then((list) => { if (Array.isArray(list)) setDebts(list) }).catch(() => {}) }, [])
+  const failed = useCallback((what, e) => {
+    if (!(e && e.status === 401)) toast(`Couldn't save your ${what}. Nothing was recorded — please try again.`, 'error')
+    resync()
+  }, [toast, resync])
+  const writeError = useCallback((what, e) => {
+    if (!(e && e.status === 401)) toast(`Couldn't save your ${what}. Please check your connection and try again.`, 'error')
+  }, [toast])
 
   useEffect(() => {
     let alive = true
-    Finance.debts().then((list) => {
-      if (alive && Array.isArray(list)) setDebts(list)
-    }).catch(() => { /* leave empty on error */ })
+    Finance.debts().then((list) => { if (alive && Array.isArray(list)) setDebts(list) }).catch(() => {})
     return () => { alive = false }
   }, [])
 
   const saveDebt = useCallback(async (rec) => {
-    const editing = !!rec.id
-    const localId = rec.id || uid()
-    setDebts((cur) => {
-      if (editing) return cur.map((d) => (d.id === localId ? { ...d, ...rec, id: localId, payments: d.payments || [] } : d))
-      return cur.concat([{ ...rec, id: localId, payments: [] }])
-    })
     try {
-      if (editing) await Finance.updateDebt(localId, rec)
-      else {
+      if (rec.id) {
+        await Finance.updateDebt(rec.id, rec)
+        setDebts((cur) => cur.map((d) => (d.id === rec.id ? { ...d, ...rec, payments: d.payments || [] } : d)))
+      } else {
         const saved = await Finance.addDebt({ ...rec, payments: [] })
-        const sid = saved && (saved.id || saved._id)
-        if (sid && sid !== localId) setDebts((cur) => cur.map((d) => (d.id === localId ? { ...d, id: sid } : d)))
+        const doc = saved && (saved.id || saved._id) ? saved : { ...rec, id: uid(), payments: [] }
+        setDebts((cur) => cur.concat([doc]))
       }
-    } catch {}
-  }, [])
+    } catch (e) { writeError('debt', e); throw e }
+  }, [writeError])
 
   const removeDebt = useCallback((id) => {
     setDebts((cur) => cur.filter((d) => d.id !== id))
-    Finance.removeDebt(id).catch(() => {})
-  }, [])
+    Finance.removeDebt(id).catch((e) => failed('change', e))
+  }, [failed])
 
-  const addPayment = useCallback((debtId, payment) => {
-    const p = { id: uid(), amount: payment.amount, date: payment.date }
-    setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: (d.payments || []).concat([p]) } : d)))
-    Finance.addDebtPayment(debtId, { amount: payment.amount, date: payment.date })
-      .then((updated) => {
-        if (updated && Array.isArray(updated.payments)) {
-          setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: updated.payments } : d)))
-        }
-      })
-      .catch(() => {})
-  }, [])
+  const addPayment = useCallback(async (debtId, payment) => {
+    try {
+      const updated = await Finance.addDebtPayment(debtId, { amount: payment.amount, date: payment.date })
+      if (updated && Array.isArray(updated.payments)) {
+        setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: updated.payments } : d)))
+      } else {
+        setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: (d.payments || []).concat([{ id: uid(), amount: payment.amount, date: payment.date }]) } : d)))
+      }
+    } catch (e) { writeError('payment', e); throw e }
+  }, [writeError])
 
   return { debts, saveDebt, removeDebt, addPayment }
 }

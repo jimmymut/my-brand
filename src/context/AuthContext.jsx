@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { api, setToken, getToken } from '../api/client'
+import { useToast } from '../components/Toast'
 
 const AuthContext = createContext(null)
 const SESSION_KEY = 'jmt_session'
@@ -19,8 +20,16 @@ export function AuthProvider({ children }) {
     try { return normalize(JSON.parse(localStorage.getItem(SESSION_KEY))) } catch { return null }
   })
   const [ready, setReady] = useState(false)
+  const toast = useToast()
 
-  // Revalidate the session against the backend on boot.
+  function persist(u) {
+    setUser(u)
+    if (u) localStorage.setItem(SESSION_KEY, JSON.stringify(u))
+    else localStorage.removeItem(SESSION_KEY)
+  }
+
+  // Revalidate the session against the backend on boot. A 401 here means the
+  // stored token is expired/invalid → the unauthorized handler below clears it.
   useEffect(() => {
     let alive = true
     const tk = getToken()
@@ -32,11 +41,20 @@ export function AuthProvider({ children }) {
     return () => { alive = false }
   }, [])
 
-  function persist(u) {
-    setUser(u)
-    if (u) localStorage.setItem(SESSION_KEY, JSON.stringify(u))
-    else localStorage.removeItem(SESSION_KEY)
-  }
+  // Central handling for an expired/invalid token: clear the session (locally,
+  // without hitting /logout — the token is already dead) and notify. Guarded so
+  // a burst of 401s (several requests at once) only logs out + toasts once.
+  useEffect(() => {
+    const onUnauthorized = () => {
+      if (!getToken() && !localStorage.getItem(SESSION_KEY)) return // already signed out
+      setToken(null)
+      persist(null)
+      toast('Your session expired — please sign in again.', 'error')
+    }
+    window.addEventListener('jmt:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('jmt:unauthorized', onUnauthorized)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function login(email, password) {
     const res = await api.post('/auth/login', { email, password })
