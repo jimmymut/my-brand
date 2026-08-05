@@ -62,6 +62,11 @@ export function useFinance() {
     } catch {}
   }, [])
 
+  const removeContrib = useCallback((id) => {
+    setContribs((cur) => cur.filter((c) => c.id !== id))
+    Finance.removeContrib(id).catch(() => {})
+  }, [])
+
   /* ----------------------------------------------------------- budget items */
   const saveBudgetItem = useCallback(async (rec) => {
     const editing = !!rec.id
@@ -90,5 +95,5 @@ export function useFinance() {
     Finance.removeBudgetItem(id).catch(() => {})
   }, [])
 
-  return { tx, contribs, budgetItems, saveTx, removeTx, saveContrib, saveBudgetItem, updateItemSpent, removeBudgetItem }
+  return { tx, contribs, budgetItems, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, updateItemSpent, removeBudgetItem }
 }

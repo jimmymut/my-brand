@@ -214,6 +214,20 @@ export default function Dashboard() {
     else openSavingCell(r.bucketId, CURRENT)
   }
 
+  // Clear a savings month — removes the deposit(s) for that goal + month so the
+  // cell goes back to "due"/"missed" (lets you un-mark a wrongly-recorded month).
+  const removeSavingContrib = () => {
+    const init = modal && modal.initial
+    if (init && init.bucket && init.month) {
+      fin.contribs
+        .filter((c) => c.bucket === init.bucket && c.month === init.month && c.kind !== 'withdrawal')
+        .forEach((c) => fin.removeContrib(c.id))
+    } else if (init && init._id) {
+      fin.removeContrib(init._id)
+    }
+    setModal(null)
+  }
+
   return (
     <div className="scope-dash" data-theme={theme} style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)', color: 'var(--text)', fontFamily: "'Manrope', sans-serif" }}>
       <Sidebar tab={tab} setTab={(t) => { setTab(t); setBellOpen(false); setExportOpen(false); setSidebarOpen(false); setDebtFilter('all') }} open={sidebarOpen} onClose={() => setSidebarOpen(false)} derived={derived} counts={counts} debt={debtD} />
@@ -244,7 +258,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} />}
+      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} />}
     </div>
   )
 }

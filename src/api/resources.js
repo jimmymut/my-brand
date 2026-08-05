@@ -125,6 +125,7 @@ export const Finance = {
   removeTx: (id) => api.del(`/finance/transactions/${id}`, true),
   saveContrib: (c) => api.post('/finance/contributions', c, true),
   updateContrib: (id, c) => api.patch(`/finance/contributions/${id}`, c, true),
+  removeContrib: (id) => api.del(`/finance/contributions/${id}`, true),
   budgetItems: () => api.get('/finance/budget-items', true),
   addBudgetItem: (it) => api.post('/finance/budget-items', it, true),
   updateBudgetItem: (id, it) => api.patch(`/finance/budget-items/${id}`, it, true),

@@ -41,7 +41,7 @@ function Pills({ options, value, onPick }) {
   )
 }
 
-export default function Modal({ kind, edit, initial, onClose, onSave }) {
+export default function Modal({ kind, edit, initial, onClose, onSave, onRemove }) {
   const [f, setF] = useState(() => ({ ...initial }))
   const [err, setErr] = useState({})
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }))
@@ -295,6 +295,9 @@ export default function Modal({ kind, edit, initial, onClose, onSave }) {
         )}
 
         <div style={{ display: 'flex', gap: 12 }}>
+          {kind === 'saving' && edit && onRemove && (
+            <button onClick={onRemove} title="Clear this month" style={{ padding: '13px 16px', borderRadius: 12, border: '1px solid rgba(251,113,133,0.35)', background: 'rgba(251,113,133,0.10)', color: '#E5577A', fontSize: 14.5, fontWeight: 700, cursor: 'pointer' }}>Remove</button>
+          )}
           <button onClick={onClose} style={{ flex: 1, padding: 13, borderRadius: 12, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--text2)', fontSize: 14.5, fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
           <button onClick={submit} style={{ flex: 1.4, padding: 13, borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#34D399,#10B981)', color: '#04110B', fontSize: 14.5, fontWeight: 700, cursor: 'pointer', boxShadow: '0 8px 20px rgba(16,185,129,0.3)' }}>{saveLabel}</button>
         </div>
