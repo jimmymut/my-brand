@@ -181,11 +181,12 @@ export default function Dashboard() {
   }
 
   /* ----------------------------------------------------------- deletions */
-  const deletePost = (pid) => { setPosts((c) => c.filter((p) => p.id !== pid)); Posts.remove(pid).catch(() => contentFailed('change')) }
-  const deleteSkill = (sid) => { setSkills((c) => c.filter((s) => s.id !== sid)); Skills.remove(sid).catch(() => contentFailed('change')) }
-  const deleteWork = (wid) => { setWork((c) => c.filter((w) => w.id !== wid)); Work.remove(wid).catch(() => contentFailed('change')) }
-  const deleteMessage = (mid) => { setMessages((c) => c.filter((m) => m.id !== mid)); Messages.remove(mid).catch(() => contentFailed('change')) }
-  const toggleRead = (m) => { setMessages((c) => c.map((x) => (x.id === m.id ? { ...x, read: !x.read } : x))); Messages.toggleRead(m.id).catch(() => contentFailed('change')) }
+  // confirm-first: only reflect the change after the backend accepts it
+  const deletePost = async (pid) => { try { await Posts.remove(pid); setPosts((c) => c.filter((p) => p.id !== pid)) } catch (e) { contentFailed('change', e) } }
+  const deleteSkill = async (sid) => { try { await Skills.remove(sid); setSkills((c) => c.filter((s) => s.id !== sid)) } catch (e) { contentFailed('change', e) } }
+  const deleteWork = async (wid) => { try { await Work.remove(wid); setWork((c) => c.filter((w) => w.id !== wid)) } catch (e) { contentFailed('change', e) } }
+  const deleteMessage = async (mid) => { try { await Messages.remove(mid); setMessages((c) => c.filter((m) => m.id !== mid)) } catch (e) { contentFailed('change', e) } }
+  const toggleRead = async (m) => { try { await Messages.toggleRead(m.id); setMessages((c) => c.map((x) => (x.id === m.id ? { ...x, read: !x.read } : x))) } catch (e) { contentFailed('change', e) } }
 
   /* --------------------------------------------------------------- export */
   const download = (name, text) => {

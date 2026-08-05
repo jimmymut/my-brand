@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import Hover from '../components/Hover'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/Toast'
 import { Posts } from '../api/resources'
 import { tagColor } from '../lib/constants'
 import { dateLabel, rgba, initial } from '../lib/format'
@@ -10,10 +11,12 @@ export default function PostDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const toast = useToast()
   const [post, setPost] = useState(null)
   const [liked, setLiked] = useState(false)
   const [draft, setDraft] = useState('')
   const [cErr, setCErr] = useState('')
+  const [posting, setPosting] = useState(false)
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -30,24 +33,34 @@ export default function PostDetail() {
 
   const cover = `linear-gradient(135deg,${tagColor(post.tag)},${rgba(tagColor(post.tag), 0.5)})`
 
+  // confirm-first: only reflect the like/comment after the backend accepts it
   const toggleLike = async () => {
     if (!user) return navigate('/login')
-    setLiked((v) => !v)
-    setPost((p) => ({ ...p, likeCount: p.likeCount + (liked ? -1 : 1) }))
     try {
       const res = await Posts.toggleLike(id)
+      setLiked((v) => !v)
       if (res && typeof res.likes === 'number') setPost((p) => ({ ...p, likeCount: res.likes }))
-    } catch {}
+      else setPost((p) => ({ ...p, likeCount: p.likeCount + (liked ? -1 : 1) }))
+    } catch (e) {
+      if (!(e && e.status === 401)) toast('Could not update your like. Please try again.', 'error')
+    }
   }
 
   const addComment = async () => {
     if (!user) return navigate('/login')
     const text = draft.trim()
     if (text.length < 2) return setCErr('Please write a comment first')
-    const optimistic = { id: 'tmp' + Date.now(), user: user.name, text, date: new Date().toISOString().slice(0, 10) }
-    setPost((p) => ({ ...p, comments: [...p.comments, optimistic] }))
-    setDraft(''); setCErr('')
-    try { await Posts.addComment(id, text) } catch {}
+    setCErr(''); setPosting(true)
+    try {
+      await Posts.addComment(id, text)
+      const comments = await Posts.comments(id) // pull the saved comment (real id + author)
+      setPost((p) => ({ ...p, comments }))
+      setDraft('')
+    } catch (e) {
+      setCErr(e && e.status === 401 ? 'Your session expired — please log in again.' : 'Could not post your comment. Please try again.')
+    } finally {
+      setPosting(false)
+    }
   }
 
   return (
@@ -96,7 +109,7 @@ export default function PostDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <textarea value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Add your comment…" style={{ width: '100%', minHeight: 90, resize: 'vertical', padding: 14, borderRadius: 14, background: 'var(--input)', border: `1px solid ${cErr ? 'rgba(251,113,133,0.6)' : 'var(--border2)'}`, fontSize: 14.5, lineHeight: 1.5, outline: 'none', color: 'var(--strong)' }} />
           {cErr && <div style={{ fontSize: 12.5, color: '#E5577A' }}>{cErr}</div>}
-          <button onClick={addComment} style={{ alignSelf: 'flex-start', padding: '12px 22px', borderRadius: 12, border: 'none', fontSize: 14.5, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', cursor: 'pointer' }}>Post comment</button>
+          <button onClick={addComment} disabled={posting} style={{ alignSelf: 'flex-start', padding: '12px 22px', borderRadius: 12, border: 'none', fontSize: 14.5, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', cursor: posting ? 'default' : 'pointer', opacity: posting ? 0.75 : 1 }}>{posting ? 'Posting…' : 'Post comment'}</button>
         </div>
       ) : (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap', padding: '20px 22px', borderRadius: 14, background: 'var(--fill)', border: '1px solid var(--border2)' }}>

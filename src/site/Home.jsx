@@ -159,16 +159,23 @@ function ContactSection() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', msg: '' })
   const [err, setErr] = useState('')
   const [sent, setSent] = useState(false)
+  const [busy, setBusy] = useState(false)
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
 
+  // confirm-first: only show "sent" once the backend actually accepts it
   const send = async () => {
     if (!form.name.trim()) return setErr('Please enter your name')
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email.trim())) return setErr('Enter a valid email')
     if (!form.msg.trim()) return setErr('Please write a message')
+    setErr(''); setBusy(true)
     try {
       await Messages.send({ name: form.name.trim(), email: form.email.trim(), phone: form.phone || '+250000000000', message: form.msg.trim() })
-    } catch { /* still acknowledge to the visitor */ }
-    setSent(true); setErr('')
+      setSent(true)
+    } catch (e) {
+      setErr(e && e.message ? e.message : 'Could not send your message. Please try again.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const input = (extra) => ({ padding: '12px 14px', borderRadius: 11, background: 'var(--input)', border: '1px solid var(--border2)', fontSize: 14, outline: 'none', color: 'var(--strong)', ...extra })
@@ -196,7 +203,7 @@ function ContactSection() {
               <input value={form.email} onChange={set('email')} placeholder="Email" style={input({ width: '100%', marginBottom: 12 })} />
               <textarea value={form.msg} onChange={set('msg')} placeholder="Your message…" style={input({ width: '100%', minHeight: 96, resize: 'vertical', lineHeight: 1.5, marginBottom: 6 })} />
               {err && <div style={{ fontSize: 12.5, color: '#E5577A', marginBottom: 10 }}>{err}</div>}
-              <button onClick={send} style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', fontSize: 15, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', cursor: 'pointer', boxShadow: '0 8px 20px rgba(16,185,129,0.3)' }}>Send message</button>
+              <button onClick={send} disabled={busy} style={{ width: '100%', padding: 13, borderRadius: 12, border: 'none', fontSize: 15, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', cursor: busy ? 'default' : 'pointer', boxShadow: '0 8px 20px rgba(16,185,129,0.3)', opacity: busy ? 0.75 : 1 }}>{busy ? 'Sending…' : 'Send message'}</button>
             </>
           )}
         </div>

@@ -12,11 +12,6 @@ export function useDebts() {
   const toast = useToast()
   const [debts, setDebts] = useState([])
 
-  const resync = useCallback(() => { Finance.debts().then((list) => { if (Array.isArray(list)) setDebts(list) }).catch(() => {}) }, [])
-  const failed = useCallback((what, e) => {
-    if (!(e && e.status === 401)) toast(`Couldn't save your ${what}. Nothing was recorded — please try again.`, 'error')
-    resync()
-  }, [toast, resync])
   const writeError = useCallback((what, e) => {
     if (!(e && e.status === 401)) toast(`Couldn't save your ${what}. Please check your connection and try again.`, 'error')
   }, [toast])
@@ -40,10 +35,10 @@ export function useDebts() {
     } catch (e) { writeError('debt', e); throw e }
   }, [writeError])
 
-  const removeDebt = useCallback((id) => {
-    setDebts((cur) => cur.filter((d) => d.id !== id))
-    Finance.removeDebt(id).catch((e) => failed('change', e))
-  }, [failed])
+  const removeDebt = useCallback(async (id) => {
+    try { await Finance.removeDebt(id); setDebts((cur) => cur.filter((d) => d.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
 
   const addPayment = useCallback(async (debtId, payment) => {
     try {

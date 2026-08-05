@@ -62,10 +62,10 @@ export function useFinance() {
     } catch (e) { writeError('transaction', e); throw e }
   }, [writeError])
 
-  const removeTx = useCallback((id) => {
-    setTx((cur) => cur.filter((t) => t.id !== id))
-    Finance.removeTx(id).catch((e) => failed('change', e))
-  }, [failed])
+  const removeTx = useCallback(async (id) => {
+    try { await Finance.removeTx(id); setTx((cur) => cur.filter((t) => t.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
 
   /* ----------------------------------------- contributions (confirm-first) */
   const saveContrib = useCallback(async (rec) => {
@@ -80,10 +80,10 @@ export function useFinance() {
     } catch (e) { writeError('contribution', e); throw e }
   }, [writeError])
 
-  const removeContrib = useCallback((id) => {
-    setContribs((cur) => cur.filter((c) => c.id !== id))
-    Finance.removeContrib(id).catch((e) => failed('change', e))
-  }, [failed])
+  const removeContrib = useCallback(async (id) => {
+    try { await Finance.removeContrib(id); setContribs((cur) => cur.filter((c) => c.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
 
   /* ----------------------------------------- budget items (confirm-first) */
   const saveBudgetItem = useCallback(async (rec) => {
@@ -121,10 +121,10 @@ export function useFinance() {
     if (updated) Finance.updateBudgetItem(id, updated).catch((e) => failed('budget item', e))
   }, [failed])
 
-  const removeBudgetItem = useCallback((id) => {
-    setBudgetItems((cur) => cur.filter((x) => x.id !== id))
-    Finance.removeBudgetItem(id).catch((e) => failed('change', e))
-  }, [failed])
+  const removeBudgetItem = useCallback(async (id) => {
+    try { await Finance.removeBudgetItem(id); setBudgetItems((cur) => cur.filter((x) => x.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
 
   return { tx, contribs, budgetItems, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem }
 }
