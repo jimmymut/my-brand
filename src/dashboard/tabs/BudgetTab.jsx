@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Hover from '../../components/Hover'
 import { fmt, monthLabel } from '../../lib/format'
 import { CURRENT } from '../../lib/constants'
@@ -5,7 +6,23 @@ import { CURRENT } from '../../lib/constants'
 const card = { padding: '20px 22px', borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }
 const ROWS = '1fr 110px 120px 110px 70px'
 
-export default function BudgetTab({ d, onAddItem, onEditItem, onDeleteItem, onSpentChange }) {
+export default function BudgetTab({ d, onAddItem, onEditItem, onDeleteItem, onSpentChange, onReorder }) {
+  const [dragId, setDragId] = useState(null)
+  const [overId, setOverId] = useState(null)
+
+  const drop = (targetId) => {
+    if (dragId && dragId !== targetId) {
+      const ids = d.items.map((i) => i.id)
+      const from = ids.indexOf(dragId)
+      const to = ids.indexOf(targetId)
+      if (from > -1 && to > -1) {
+        ids.splice(to, 0, ids.splice(from, 1)[0])
+        onReorder(ids)
+      }
+    }
+    setDragId(null); setOverId(null)
+  }
+
   return (
     <div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 18, marginBottom: 22 }}>
@@ -42,8 +59,25 @@ export default function BudgetTab({ d, onAddItem, onEditItem, onDeleteItem, onSp
             </div>
             {d.items.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: 'var(--muted3)', fontSize: 13.5 }}>No items yet — add what you plan to spend.</div>}
             {d.items.map((it) => (
-              <div key={it.id} style={{ display: 'grid', gridTemplateColumns: ROWS, gap: 12, alignItems: 'center', padding: '9px 6px', borderTop: '1px solid var(--border)' }}>
-                <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{it.name}</span>
+              <div
+                key={it.id}
+                onDragOver={(e) => { e.preventDefault(); if (overId !== it.id) setOverId(it.id) }}
+                onDrop={() => drop(it.id)}
+                style={{ display: 'grid', gridTemplateColumns: ROWS, gap: 12, alignItems: 'center', padding: '9px 6px', borderTop: overId === it.id && dragId ? '2px solid #34D399' : '1px solid var(--border)', opacity: dragId === it.id ? 0.4 : 1, background: overId === it.id && dragId && dragId !== it.id ? 'var(--fill)' : 'transparent' }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span
+                    className="noprint"
+                    draggable
+                    onDragStart={() => setDragId(it.id)}
+                    onDragEnd={() => { setDragId(null); setOverId(null) }}
+                    title="Drag to reorder"
+                    style={{ cursor: 'grab', color: 'var(--muted3)', fontSize: 14, lineHeight: 1, flexShrink: 0, userSelect: 'none' }}
+                  >⠿</span>
+                  <span title={`${it.priorityLabel} priority`} style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: it.priorityColor }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{it.name}</span>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: it.priorityColor, background: 'var(--fill)', border: '1px solid var(--border2)', padding: '1px 7px', borderRadius: 6, flexShrink: 0 }}>{it.priorityLabel}</span>
+                </span>
                 <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'var(--strong)', fontVariantNumeric: 'tabular-nums' }}>{it.valueStr}</span>
                 <input type="number" value={it.spentVal} onChange={(e) => onSpentChange(it.id, e.target.value)} placeholder="0" style={{ width: '100%', textAlign: 'right', padding: '8px 10px', borderRadius: 9, background: 'var(--input)', border: '1px solid var(--border2)', color: 'var(--strong)', fontSize: 13.5, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: 'none' }} />
                 <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: it.remainingColor }}>{it.remainingStr}</span>

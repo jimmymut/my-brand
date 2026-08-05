@@ -62,3 +62,13 @@ export const RED = '#E5577A'
 export function tagColor(t) {
   return TAG_COLORS[t] || '#94A3B8'
 }
+
+// Budget-item priority — used to sort the budget plan (high first).
+export const PRIORITIES = [
+  { id: 'high', label: 'High', color: '#E5577A', rank: 0 },
+  { id: 'medium', label: 'Medium', color: '#F59E0B', rank: 1 },
+  { id: 'low', label: 'Low', color: '#7E8A9C', rank: 2 },
+]
+export function priorityMeta(id) {
+  return PRIORITIES.find((p) => p.id === id) || PRIORITIES[1]
+}

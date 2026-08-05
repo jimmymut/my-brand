@@ -1,5 +1,5 @@
 // Pure finance computations ported from the dashboard prototype's renderVals().
-import { BUCKETS, CATS, CURRENT, YEAR, MONTHS } from '../lib/constants'
+import { BUCKETS, CATS, CURRENT, YEAR, MONTHS, priorityMeta } from '../lib/constants'
 import { fmt, monthLabel, monthFull, dateLabel, rgba } from '../lib/format'
 
 const STATUS = {
@@ -51,8 +51,10 @@ export function deriveFinance({ tx, contribs, budgetItems }, { range, selMonth, 
     const deposited = byMonth.reduce((a, m) => a + m.amount, 0)
     const withdrawn = contribs.filter((c) => c.bucket === b.id && isWithdrawal(c)).reduce((a, c) => a + c.amount, 0)
     const saved = deposited - withdrawn // balance currently held
-    const debt = byMonth.filter((m) => m.month !== CURRENT).reduce((a, m) => a + Math.max(0, b.target - m.amount), 0)
     const thisMonth = byMonth.find((m) => m.month === CURRENT).amount
+    const debtPast = byMonth.filter((m) => m.month !== CURRENT).reduce((a, m) => a + Math.max(0, b.target - m.amount), 0)
+    // the current month counts too — an unfunded month is already owed
+    const debt = debtPast + Math.max(0, b.target - thisMonth)
     const pct = Math.min(100, Math.round(thisMonth / b.target * 100))
     // most recent account this goal was saved into, else the bucket default
     const lastWithAccount = contribs.filter((c) => c.bucket === b.id && c.account).slice(-1)[0]
@@ -61,12 +63,13 @@ export function deriveFinance({ tx, contribs, budgetItems }, { range, selMonth, 
       ...b, account, byMonth,
       deposited, depositedStr: fmt(deposited), withdrawn, withdrawnStr: fmt(withdrawn), hasWithdrawn: withdrawn > 0,
       saved, savedStr: fmt(saved), balance: saved, balanceStr: fmt(saved),
-      debt, debtStr: fmt(debt), hasDebt: debt > 0,
+      debt, debtStr: fmt(debt), hasDebt: debt > 0, debtPast, debtPastStr: fmt(debtPast),
       thisMonth, thisMonthStr: fmt(thisMonth), targetStr: fmt(b.target), pct, pctStr: pct + '%',
       softBg: rgba(b.color, 0.14),
     }
   })
-  const totalDebt = buckets.reduce((a, b) => a + b.debt, 0)
+  const totalDebt = buckets.reduce((a, b) => a + b.debt, 0)          // incl. current month
+  const pastDebtTotal = buckets.reduce((a, b) => a + b.debtPast, 0)  // earlier months only
   const targetTotal = buckets.reduce((a, b) => a + b.target, 0)
   const savedRealMonth = buckets.reduce((a, b) => a + b.thisMonth, 0)
 
@@ -74,8 +77,10 @@ export function deriveFinance({ tx, contribs, budgetItems }, { range, selMonth, 
   const items = (budgetItems || []).map((it) => {
     const sp = it.spent || 0
     const rem = (it.amount || 0) - sp
-    return { id: it.id, name: it.name, amount: it.amount, valueStr: fmt(it.amount), spent: sp, spentVal: sp, spentStr: fmt(sp), remaining: rem, remainingStr: fmt(rem), remainingColor: rem < 0 ? '#E5577A' : 'var(--text2)' }
-  })
+    const priority = it.priority || 'low'
+    const pm = priorityMeta(priority)
+    return { id: it.id, name: it.name, amount: it.amount, valueStr: fmt(it.amount), spent: sp, spentVal: sp, spentStr: fmt(sp), remaining: rem, remainingStr: fmt(rem), remainingColor: rem < 0 ? '#E5577A' : 'var(--text2)', priority, priorityLabel: pm.label, priorityColor: pm.color, priorityRank: pm.rank, order: it.order || 0 }
+  }).sort((a, b) => a.order - b.order) // manual drag order
   const plannedTotal = items.reduce((a, it) => a + (it.amount || 0), 0)
   const spentTotal = items.reduce((a, it) => a + (it.spent || 0), 0)
   const remainingTotal = plannedTotal - spentTotal
@@ -96,14 +101,14 @@ export function deriveFinance({ tx, contribs, budgetItems }, { range, selMonth, 
   const dueTotal = dueB.reduce((a, b) => a + (b.target - b.thisMonth), 0)
   const reminders = dueB.map((b) => ({
     bucketId: b.id, name: b.name, color: b.color,
-    note: (b.target - b.thisMonth > 0 ? ('FRw ' + (b.target - b.thisMonth).toLocaleString('en-US') + ' due') : '') + (b.debt > 0 ? (' · ' + fmt(b.debt) + ' overdue') : ''),
-    tone: b.debt > 0 ? '#E5577A' : 'var(--muted2)',
+    note: (b.target - b.thisMonth > 0 ? ('FRw ' + (b.target - b.thisMonth).toLocaleString('en-US') + ' due') : '') + (b.debtPast > 0 ? (' · ' + fmt(b.debtPast) + ' overdue') : ''),
+    tone: b.debtPast > 0 ? '#E5577A' : 'var(--muted2)',
   }))
   const reminderCount = dueB.length
   const hasReminder = reminderCount > 0 || totalDebt > 0
   const parts = []
   if (dueTotal > 0) parts.push(fmt(dueTotal) + ' still to set aside')
-  if (totalDebt > 0) parts.push(fmt(totalDebt) + ' overdue from earlier months')
+  if (pastDebtTotal > 0) parts.push(fmt(pastDebtTotal) + ' overdue from earlier months')
   const reminderSummary = parts.length ? parts.join(' · ') : 'You are on track this month.'
   const budgetReminders = (budget > 0 && (budgetOver || budgetNear)) ? [{ budget: true, name: 'Monthly budget', color: budgetColor, note: budgetOver ? ('Over by ' + fmt(budgetSpent - budget)) : (budgetPctInt + '% used · ' + fmt(Math.max(0, budgetRemaining)) + ' left'), tone: budgetOver ? '#E5577A' : '#D08700' }] : []
   const bellReminders = budgetReminders.concat(reminders)

@@ -129,6 +129,7 @@ export const Finance = {
   budgetItems: () => api.get('/finance/budget-items', true),
   addBudgetItem: (it) => api.post('/finance/budget-items', it, true),
   updateBudgetItem: (id, it) => api.patch(`/finance/budget-items/${id}`, it, true),
+  reorderBudgetItems: (ids) => api.patch('/finance/budget-items/reorder', { ids }, true),
   removeBudgetItem: (id) => api.del(`/finance/budget-items/${id}`, true),
   debts: () => api.get('/finance/debts', true),
   addDebt: (d) => api.post('/finance/debts', d, true),

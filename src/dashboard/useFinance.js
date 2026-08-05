@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { uid } from '../lib/format'
 import { Finance } from '../api/resources'
 
@@ -13,6 +13,8 @@ export function useFinance() {
   const [tx, setTx] = useState([])
   const [contribs, setContribs] = useState([])
   const [budgetItems, setBudgetItems] = useState([])
+  const itemsRef = useRef([])
+  useEffect(() => { itemsRef.current = budgetItems }, [budgetItems])
 
   useEffect(() => {
     let alive = true
@@ -71,7 +73,10 @@ export function useFinance() {
   const saveBudgetItem = useCallback(async (rec) => {
     const editing = !!rec.id
     const localId = rec.id || uid()
-    const full = { spent: 0, ...rec, id: localId }
+    // new items append to the bottom of the manual order
+    const existing = editing ? itemsRef.current.find((x) => x.id === localId) : null
+    const order = rec.order != null ? rec.order : existing ? (existing.order || 0) : (itemsRef.current.reduce((m, x) => Math.max(m, x.order || 0), -1) + 1)
+    const full = { spent: 0, priority: 'low', ...rec, id: localId, order }
     setBudgetItems((cur) => (editing ? cur.map((x) => (x.id === localId ? full : x)) : cur.concat([full])))
     try {
       if (editing) await Finance.updateBudgetItem(localId, full)
@@ -81,6 +86,17 @@ export function useFinance() {
         if (sid && sid !== localId) setBudgetItems((cur) => cur.map((x) => (x.id === localId ? { ...x, id: sid } : x)))
       }
     } catch {}
+  }, [])
+
+  // Drag-to-reorder: persist the new order (each item's `order` = its index).
+  const reorderBudgetItems = useCallback((orderedIds) => {
+    setBudgetItems((cur) => {
+      const byId = new Map(cur.map((x) => [x.id, x]))
+      const reordered = orderedIds.map((id, i) => (byId.has(id) ? { ...byId.get(id), order: i } : null)).filter(Boolean)
+      const extras = cur.filter((x) => !orderedIds.includes(x.id)) // safety: keep any not listed
+      return reordered.concat(extras)
+    })
+    Finance.reorderBudgetItems(orderedIds).catch(() => {})
   }, [])
 
   const updateItemSpent = useCallback((id, val) => {
@@ -95,5 +111,5 @@ export function useFinance() {
     Finance.removeBudgetItem(id).catch(() => {})
   }, [])
 
-  return { tx, contribs, budgetItems, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, updateItemSpent, removeBudgetItem }
+  return { tx, contribs, budgetItems, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem }
 }

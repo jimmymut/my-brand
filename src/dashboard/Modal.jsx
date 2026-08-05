@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { CATS, BUCKETS, MONTHS, TAGS } from '../lib/constants'
+import { CATS, BUCKETS, MONTHS, TAGS, PRIORITIES } from '../lib/constants'
 import { monthLabel, today } from '../lib/format'
 
 const TITLES = {
@@ -245,6 +245,8 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove }
             <input type="number" value={f.amount == null ? '' : f.amount} onChange={onInput('amount')} placeholder="0" style={{ ...inp(err.amount && 'rgba(251,113,133,0.6)'), fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono'", marginBottom: 6 }} />
             {err.amount && <div style={{ ...errStyle, marginBottom: 6 }}>{err.amount}</div>}
             <div style={{ height: 18 }} />
+            <label style={lbl}>Priority</label>
+            <Pills options={PRIORITIES.map((p) => ({ value: p.id, name: p.label }))} value={f.priority || 'low'} onPick={(v) => set('priority', v)} />
           </>
         )}
 
