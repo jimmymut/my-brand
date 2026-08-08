@@ -1,10 +1,36 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Hover from '../../components/Hover'
 import { fmt, monthLabel } from '../../lib/format'
 import { CURRENT } from '../../lib/constants'
 
 const card = { padding: '20px 22px', borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }
 const ROWS = '1fr 110px 120px 110px 70px'
+
+// "Spent" cell: type locally, save ONCE on blur/Enter — avoids a PATCH per
+// keystroke (which raced and sometimes persisted a stale value).
+function SpentCell({ item, onCommit }) {
+  const [val, setVal] = useState(String(item.spent ?? 0))
+  const [editing, setEditing] = useState(false)
+  useEffect(() => { if (!editing) setVal(String(item.spent ?? 0)) }, [item.spent, editing])
+
+  const commit = () => {
+    setEditing(false)
+    const next = parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0
+    if (next !== (item.spent || 0)) onCommit(item.id, next)
+  }
+  return (
+    <input
+      type="number"
+      value={val}
+      onFocus={() => setEditing(true)}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+      placeholder="0"
+      style={{ width: '100%', textAlign: 'right', padding: '8px 10px', borderRadius: 9, background: 'var(--input)', border: '1px solid var(--border2)', color: 'var(--strong)', fontSize: 13.5, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: 'none' }}
+    />
+  )
+}
 
 export default function BudgetTab({ d, onAddItem, onEditItem, onDeleteItem, onSpentChange, onReorder }) {
   const [dragId, setDragId] = useState(null)
@@ -79,7 +105,7 @@ export default function BudgetTab({ d, onAddItem, onEditItem, onDeleteItem, onSp
                   <span style={{ fontSize: 10.5, fontWeight: 700, color: it.priorityColor, background: 'var(--fill)', border: '1px solid var(--border2)', padding: '1px 7px', borderRadius: 6, flexShrink: 0 }}>{it.priorityLabel}</span>
                 </span>
                 <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, color: 'var(--strong)', fontVariantNumeric: 'tabular-nums' }}>{it.valueStr}</span>
-                <input type="number" value={it.spentVal} onChange={(e) => onSpentChange(it.id, e.target.value)} placeholder="0" style={{ width: '100%', textAlign: 'right', padding: '8px 10px', borderRadius: 9, background: 'var(--input)', border: '1px solid var(--border2)', color: 'var(--strong)', fontSize: 13.5, fontWeight: 700, fontFamily: "'JetBrains Mono'", outline: 'none' }} />
+                <SpentCell item={it} onCommit={onSpentChange} />
                 <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: it.remainingColor }}>{it.remainingStr}</span>
                 <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                   <Hover onClick={() => onEditItem(it)} title="Edit" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 12 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
