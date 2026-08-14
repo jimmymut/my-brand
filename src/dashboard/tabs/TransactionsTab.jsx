@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Hover from '../../components/Hover'
+import AsyncButton from '../../components/AsyncButton'
 import Pager from '../../components/Pager'
 import { fmt } from '../../lib/format'
 import { makePager, pageSlice } from '../../lib/pager'
@@ -55,7 +56,7 @@ export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDe
             <div style={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: t.amountColor }}>{t.amountStr}</div>
             <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
               <Hover onClick={() => onEdit(t.raw)} title="Edit" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
-              <Hover onClick={() => onDelete(t.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</Hover>
+              <AsyncButton onClick={() => onDelete(t.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
             </div>
           </div>
         ))}

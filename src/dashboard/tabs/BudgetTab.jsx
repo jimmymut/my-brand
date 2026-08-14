@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Hover from '../../components/Hover'
+import AsyncButton from '../../components/AsyncButton'
 import { fmt, monthLabel } from '../../lib/format'
 import { CURRENT } from '../../lib/constants'
 
@@ -109,7 +110,7 @@ export default function BudgetTab({ d, onAddItem, onEditItem, onDeleteItem, onSp
                 <span style={{ textAlign: 'right', fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: it.remainingColor }}>{it.remainingStr}</span>
                 <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
                   <Hover onClick={() => onEditItem(it)} title="Edit" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 12 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
-                  <Hover onClick={() => onDeleteItem(it.id)} title="Delete" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</Hover>
+                  <AsyncButton onClick={() => onDeleteItem(it.id)} title="Delete" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
                 </div>
               </div>
             ))}

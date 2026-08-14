@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Hover from '../../components/Hover'
+import AsyncButton from '../../components/AsyncButton'
 import SearchInput from '../../components/SearchInput'
 import Pager from '../../components/Pager'
 import { dateLabel } from '../../lib/format'
@@ -54,8 +55,8 @@ export default function MessagesTab({ messages, onToggleRead, onDelete }) {
             <div style={{ fontSize: 13.5, color: 'var(--text2)', lineHeight: 1.5 }}>{m.message}</div>
             <div style={{ fontSize: 13, color: 'var(--muted2)' }}>{dateLabel(m.date)}</div>
             <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-              <Hover onClick={() => onToggleRead(m)} title={m.read ? 'Mark unread' : 'Mark read'} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>{m.read ? '○' : '●'}</Hover>
-              <Hover onClick={() => onDelete(m.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</Hover>
+              <AsyncButton onClick={() => onToggleRead(m)} title={m.read ? 'Mark unread' : 'Mark read'} style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>{m.read ? '○' : '●'}</AsyncButton>
+              <AsyncButton onClick={() => onDelete(m.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
             </div>
           </div>
         ))}

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Hover from '../../components/Hover'
+import AsyncButton from '../../components/AsyncButton'
 import SearchInput from '../../components/SearchInput'
 import Pager from '../../components/Pager'
 import { workRange, workDuration } from '../../lib/format'
@@ -41,7 +42,7 @@ export default function WorkTab({ work, onEdit, onDelete }) {
           </div>
           <div className="noprint" style={{ display: 'flex', gap: 8 }}>
             <Hover onClick={() => onEdit(w)} style={{ padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'var(--hover)' }}>Edit</Hover>
-            <Hover onClick={() => onDelete(w.id)} style={{ width: 38, padding: '9px 0', borderRadius: 10, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 14, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</Hover>
+            <AsyncButton onClick={() => onDelete(w.id)} style={{ width: 38, padding: '9px 0', borderRadius: 10, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 14, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
           </div>
         </div>
       ))}

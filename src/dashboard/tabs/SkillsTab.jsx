@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import Hover from '../../components/Hover'
+import AsyncButton from '../../components/AsyncButton'
 import SearchInput from '../../components/SearchInput'
 import Pager from '../../components/Pager'
 import { initial } from '../../lib/format'
@@ -43,7 +44,7 @@ export default function SkillsTab({ skills, onEdit, onDelete }) {
               <p style={{ fontSize: 13.5, lineHeight: 1.55, color: 'var(--muted)', marginBottom: 16, minHeight: 38 }}>{s.desc}</p>
               <div className="noprint" style={{ display: 'flex', gap: 8 }}>
                 <Hover onClick={() => onEdit(s)} style={{ flex: 1, padding: 10, borderRadius: 10, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--text)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'var(--hover)' }}>Edit</Hover>
-                <Hover onClick={() => onDelete(s.id)} style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>Delete</Hover>
+                <AsyncButton onClick={() => onDelete(s.id)} style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 13, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>Delete</AsyncButton>
               </div>
             </div>
           ))}
