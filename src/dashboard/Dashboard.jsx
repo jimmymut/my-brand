@@ -14,6 +14,7 @@ import TopBar from './TopBar'
 import Modal from './Modal'
 import OverviewTab from './tabs/OverviewTab'
 import TransactionsTab from './tabs/TransactionsTab'
+import AccountsTab from './tabs/AccountsTab'
 import SavingsTab from './tabs/SavingsTab'
 import BudgetTab from './tabs/BudgetTab'
 import BlogTab from './tabs/BlogTab'
@@ -60,8 +61,8 @@ export default function Dashboard() {
   useEffect(() => { refetchContent() }, [])
 
   const derived = useMemo(
-    () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems, goals: fin.goals }, { range, selMonth, txFilter }),
-    [fin.tx, fin.contribs, fin.budgetItems, fin.goals, range, selMonth, txFilter]
+    () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems, goals: fin.goals, accounts: fin.accounts }, { range, selMonth, txFilter }),
+    [fin.tx, fin.contribs, fin.budgetItems, fin.goals, fin.accounts, range, selMonth, txFilter]
   )
 
   // the Budget tab plans a month of its own (incl. future months) — derived
@@ -91,15 +92,17 @@ export default function Dashboard() {
   /* ----------------------------------------------------------- modal open */
   const openModal = (kind, item, preset) => {
     let initial
+    const firstWallet = (fin.accounts.find((a) => !a.archived && a.type !== 'savings') || {}).name || ''
     if (item) initial = { ...item, _id: item.id }
-    else if (kind === 'income') initial = { amount: '', desc: '', date: today() }
-    else if (kind === 'expense') initial = { amount: '', category: 'rent', desc: '', date: today() }
+    else if (kind === 'income') initial = { amount: '', desc: '', date: today(), account: firstWallet }
+    else if (kind === 'expense') initial = { amount: '', category: 'rent', desc: '', date: today(), account: firstWallet }
     else if (kind === 'saving') {
       const pre = preset || {}
       const bucketId = pre.bucket || (derived.buckets[0] && derived.buckets[0].id) || 'ejoheza'
       const bk = derived.buckets.find((b) => b.id === bucketId) // built-in OR custom goal
-      initial = { amount: '', bucket: bucketId, month: recordMonth, date: today(), kind: 'deposit', account: (bk && bk.account) || '', ...pre }
+      initial = { amount: '', bucket: bucketId, month: recordMonth, date: today(), kind: 'deposit', account: (bk && bk.account) || '', wallet: firstWallet, ...pre }
     }
+    else if (kind === 'account') initial = { name: '', type: 'spendable', color: GOAL_COLORS[0], openingBalance: '' }
     else if (kind === 'post') initial = { title: '', excerpt: '', tag: 'Frontend', customTopic: '', image: '' }
     else if (kind === 'skill') initial = { name: '', desc: '', level: 75, icon: '' }
     else if (kind === 'budgetItem') initial = { name: '', amount: '', priority: 'low', month: budgetMonth }
@@ -190,9 +193,11 @@ export default function Dashboard() {
     const id = f._id
     try {
       if (k === 'income' || k === 'expense') {
-        await fin.saveTx({ id, kind: k, amount: f.amount, category: k === 'expense' ? f.category : null, desc: f.desc || '', date: f.date })
+        await fin.saveTx({ id, kind: k, amount: f.amount, category: k === 'expense' ? f.category : null, desc: f.desc || '', date: f.date, account: f.account || '' })
       } else if (k === 'saving') {
-        await fin.saveContrib({ id, bucket: f.bucket, amount: f.amount, month: f.month, date: f.date, account: f.account || '', kind: f.kind || 'deposit' })
+        await fin.saveContrib({ id, bucket: f.bucket, amount: f.amount, month: f.month, date: f.date, account: f.account || '', wallet: f.wallet || '', kind: f.kind || 'deposit' })
+      } else if (k === 'account') {
+        await fin.saveAccount({ id, name: f.name, type: f.type || 'spendable', color: f.color || GOAL_COLORS[0], openingBalance: f.openingBalance })
       } else if (k === 'budgetItem') {
         await fin.saveBudgetItem({ id, name: f.name, amount: f.amount, spent: f.spent != null ? f.spent : 0, priority: f.priority || 'low', month: f.month || budgetMonth })
       } else if (k === 'goal') {
@@ -347,6 +352,7 @@ export default function Dashboard() {
         <div style={{ padding: '28px 32px 60px' }}>
           {tab === 'overview' && <OverviewTab d={derived} setTab={setTab} onSavingCell={openSavingCell} />}
           {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(t) => openModal(t.kind, t.raw)} onDelete={(t) => (t.kind === 'saving' ? fin.removeContrib(t.raw.id) : fin.removeTx(t.raw.id))} />}
+          {tab === 'accounts' && <AccountsTab d={derived} onAddAccount={() => openModal('account')} onEditAccount={(a) => openModal('account', fin.accounts.find((x) => x.id === a.id) || a)} onDeleteAccount={fin.removeAccount} />}
           {tab === 'savings' && <SavingsTab d={derived} recordMonth={recordMonth} onSavingCell={openSavingCell} onWithdraw={(b) => openModal('saving', null, { bucket: b.id, month: recordMonth, kind: 'withdrawal', amount: '', account: b.account })} onAddGoal={() => openModal('goal')} onEditGoal={(g) => openModal('goal', g)} onDeleteGoal={fin.removeGoal} onAdjustTarget={openAdjustTarget} />}
           {tab === 'budget' && <BudgetTab d={budgetView} month={budgetMonth} canPrev={canPrevBudget} canNext={canNextBudget} onPrevMonth={() => shiftBudgetMonth(-1)} onNextMonth={() => shiftBudgetMonth(1)} sourceMonths={budgetSourceMonths} onCopyFrom={copyBudgetFrom} onAddItem={() => openModal('budgetItem')} onEditItem={(it) => openModal('budgetItem', it)} onDeleteItem={fin.removeBudgetItem} onSpentChange={fin.updateItemSpent} onReorder={fin.reorderBudgetItems} />}
           {tab === 'blog' && <BlogTab posts={posts} onEdit={(p) => openModal('post', p)} onDelete={deletePost} />}
@@ -357,7 +363,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} bucketOptions={derived.buckets.map((b) => ({ value: b.id, name: b.short || b.name, account: b.account, startMonth: b.startMonth }))} monthDeposits={savingMonthDeposits} onRemoveContrib={fin.removeContrib} />}
+      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} bucketOptions={derived.buckets.map((b) => ({ value: b.id, name: b.short || b.name, account: b.account, startMonth: b.startMonth }))} accountOptions={fin.accounts.filter((a) => !a.archived).map((a) => ({ value: a.name, name: a.name, type: a.type, color: a.color }))} monthDeposits={savingMonthDeposits} onRemoveContrib={fin.removeContrib} />}
     </div>
   )
 }

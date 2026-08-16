@@ -13,6 +13,7 @@ const TITLES = {
   budgetItem: (e) => (e ? 'Edit budget item' : 'Add budget item'),
   goal: (e) => (e ? 'Edit goal' : 'New savings goal'),
   goalTarget: () => 'Adjust monthly target',
+  account: (e) => (e ? 'Edit account' : 'New account'),
   debt: (e) => (e ? 'Edit debt' : 'Add a debt'),
   debtPayment: () => 'Record a payment',
 }
@@ -44,7 +45,7 @@ function Pills({ options, value, onPick }) {
   )
 }
 
-export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, bucketOptions, monthDeposits = [], onRemoveContrib }) {
+export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, bucketOptions, accountOptions = [], monthDeposits = [], onRemoveContrib }) {
   const goalOpts = bucketOptions && bucketOptions.length ? bucketOptions : BUCKETS.map((b) => ({ value: b.id, name: b.short, account: b.account }))
   const [f, setF] = useState(() => ({ ...initial }))
   const [err, setErr] = useState({})
@@ -108,6 +109,12 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
       if (Object.keys(e).length) return setErr(e)
       return commit({ ...f, target: amt })
     }
+    if (kind === 'account') {
+      if (!String(f.name || '').trim()) e.name = 'Account name is required'
+      if (Object.keys(e).length) return setErr(e)
+      const opening = parseFloat(String(f.openingBalance == null ? '' : f.openingBalance).replace(/[^0-9.-]/g, '')) || 0
+      return commit({ ...f, name: f.name.trim(), type: f.type || 'spendable', openingBalance: opening })
+    }
     if (kind === 'debt') {
       const amt = parseFloat(String(f.amount == null ? '' : f.amount).replace(/[^0-9.]/g, ''))
       if (!String(f.name || '').trim()) e.name = (f.direction === 'lent' ? 'Borrower' : 'Lender') + ' name is required'
@@ -125,15 +132,22 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
     if (!amt || amt <= 0) e.amount = 'Enter an amount greater than 0'
     if (kind === 'expense' && f.category === 'other' && !String(f.desc || '').trim()) e.desc = 'Description is required for the “Other” category'
     if (kind === 'saving' && !f.bucket) e.bucket = 'Choose a goal'
+    // once accounts exist, require the wallet so per-account balances stay correct
+    if (hasAccounts && (kind === 'income' || kind === 'expense') && !f.account) e.account = 'Choose an account'
+    if (hasAccounts && kind === 'saving' && !f.wallet) e.wallet = f.kind === 'withdrawal' ? 'Choose where it was returned to' : 'Choose where it was paid from'
     if (Object.keys(e).length) return setErr(e)
     commit({ ...f, amount: amt })
   }
 
-  const saveLabel = kind === 'goalTarget' ? 'Update target' : edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'goal' ? 'Create goal' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
+  const saveLabel = kind === 'goalTarget' ? 'Update target' : edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'goal' ? 'Create goal' : kind === 'account' ? 'Create account' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
   const isFinance = kind === 'income' || kind === 'expense' || kind === 'saving'
   const isOther = kind === 'expense' && f.category === 'other'
   const selGoal = goalOpts.find((o) => o.value === f.bucket)
   const goalMonthOpts = goalMonths(selGoal && selGoal.startMonth)
+  // accounts/wallets: any account for income/expense; spendable ones for the
+  // wallet a saving is paid from / returned to
+  const hasAccounts = accountOptions.length > 0
+  const spendableOpts = accountOptions.filter((a) => a.type !== 'savings')
   // partial-saving progress for the chosen month (top-up toward the monthly target)
   const isDeposit = kind === 'saving' && (f.kind || 'deposit') === 'deposit'
   // only trust the passed month context while the goal & month still match the tapped cell
@@ -214,11 +228,29 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
                 </div>
                 <label style={lbl}>Account / where it's held</label>
                 <input type="text" value={f.account || ''} onChange={onInput('account')} placeholder="e.g. Ejo Heza, BK" style={{ ...inp(), marginBottom: 16 }} />
+                <label style={lbl}>{f.kind === 'withdrawal' ? 'Returned to wallet' : 'Paid from wallet'}</label>
+                {spendableOpts.length ? (
+                  <>
+                    <Pills options={spendableOpts.map((a) => ({ value: a.value, name: a.name }))} value={f.wallet} onPick={(v) => set('wallet', v)} />
+                    {err.wallet && <div style={{ ...errStyle, marginTop: -8, marginBottom: 12 }}>{err.wallet}</div>}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginBottom: 16 }}>No spendable accounts yet — add one in the Accounts tab to track which wallet this moves through.</div>
+                )}
               </>
             )}
 
             {(kind === 'income' || kind === 'expense') && (
               <>
+                <label style={lbl}>{kind === 'income' ? 'Received into' : 'Paid from'}</label>
+                {hasAccounts ? (
+                  <>
+                    <Pills options={accountOptions.map((a) => ({ value: a.value, name: a.name }))} value={f.account} onPick={(v) => set('account', v)} />
+                    {err.account && <div style={{ ...errStyle, marginTop: -8, marginBottom: 12 }}>{err.account}</div>}
+                  </>
+                ) : (
+                  <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginBottom: 16 }}>No accounts yet — add your wallets in the Accounts tab to track balances.</div>
+                )}
                 <label style={lbl}>Description {isOther ? '(required)' : '(optional)'}</label>
                 <input type="text" value={f.desc || ''} onChange={onInput('desc')} placeholder={kind === 'income' ? 'e.g. Freelance project' : 'What was it for?'} style={inp(err.desc && 'rgba(251,113,133,0.6)')} />
                 {err.desc && <div style={errStyle}>{err.desc}</div>}
@@ -377,6 +409,29 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
             {err.month && <div style={errStyle}>{err.month}</div>}
             <div style={{ fontSize: 12, color: 'var(--muted3)', marginTop: 10, marginBottom: 24 }}>
               {f.month ? <>Months before <b>{monthFull(f.month)}</b> keep their current target. The new target applies from <b>{monthFull(f.month)}</b> onward.</> : 'Earlier months keep their current target.'}
+            </div>
+          </>
+        )}
+
+        {kind === 'account' && (
+          <>
+            <label style={lbl}>Account name</label>
+            <input type="text" value={f.name || ''} onChange={onInput('name')} placeholder="e.g. Airtel Money, MTN MoMo, BK, Cash" style={{ ...inp(err.name && 'rgba(251,113,133,0.6)'), fontSize: 15, fontWeight: 600 }} />
+            {err.name && <div style={errStyle}>{err.name}</div>}
+            <div style={{ height: 16 }} />
+            <label style={lbl}>Type</label>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <button onClick={() => set('type', 'spendable')} style={dirStyle((f.type || 'spendable') === 'spendable', 'green')}>Spendable wallet</button>
+              <button onClick={() => set('type', 'savings')} style={dirStyle(f.type === 'savings', 'green')}>Savings pot</button>
+            </div>
+            <label style={lbl}>Opening balance (FRw)</label>
+            <input type="number" value={f.openingBalance == null ? '' : f.openingBalance} onChange={onInput('openingBalance')} placeholder="0" style={{ ...inp(), fontFamily: "'JetBrains Mono'", marginBottom: 6 }} />
+            <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 16 }}>What this account already held before you started tracking here.</div>
+            <label style={lbl}>Colour</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {GOAL_COLORS.map((c) => (
+                <button key={c} onClick={() => set('color', c)} title={c} style={{ width: 30, height: 30, borderRadius: 8, cursor: 'pointer', background: c, border: (f.color || GOAL_COLORS[0]) === c ? '3px solid var(--strong)' : '1px solid var(--border2)' }} />
+              ))}
             </div>
           </>
         )}

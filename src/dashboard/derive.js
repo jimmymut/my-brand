@@ -53,7 +53,42 @@ export function deriveBudget(budgetItems, tx, contribs, month) {
   return { month, items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs }
 }
 
-export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, selMonth, txFilter }) {
+// Per-account (wallet/pot) balances from every flow that references them by name.
+// balance = opening + income in − expenses out
+//         + deposits landing here − deposits paid from here
+//         − withdrawals taken from here + withdrawals returned here
+export function deriveAccounts(accounts, tx, contribs) {
+  const sum = (arr) => arr.reduce((a, x) => a + (x.amount || 0), 0)
+  const flows = (name) => {
+    const inc = sum(tx.filter((t) => t.kind === 'income' && t.account === name))
+    const exp = sum(tx.filter((t) => t.kind === 'expense' && t.account === name))
+    const depIn = sum(contribs.filter((c) => c.kind !== 'withdrawal' && c.account === name))
+    const depOut = sum(contribs.filter((c) => c.kind !== 'withdrawal' && c.wallet === name))
+    const wdOut = sum(contribs.filter((c) => c.kind === 'withdrawal' && c.account === name))
+    const wdIn = sum(contribs.filter((c) => c.kind === 'withdrawal' && c.wallet === name))
+    return { inflow: inc + depIn + wdIn, outflow: exp + depOut + wdOut }
+  }
+  const views = (accounts || []).filter((a) => !a.archived).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((a) => {
+    const f = flows(a.name)
+    const opening = a.openingBalance || 0
+    const balance = opening + f.inflow - f.outflow
+    return {
+      id: a.id, name: a.name, type: a.type || 'spendable', color: a.color || '#38BDF8',
+      opening, openingStr: fmt(opening), inflow: f.inflow, outflow: f.outflow,
+      inflowStr: fmt(f.inflow), outflowStr: fmt(f.outflow),
+      balance, balanceStr: fmt(balance), negative: balance < 0,
+    }
+  })
+  const spendableTotal = views.filter((v) => v.type === 'spendable').reduce((a, v) => a + v.balance, 0)
+  const savingsTotal = views.filter((v) => v.type === 'savings').reduce((a, v) => a + v.balance, 0)
+  // income/expense not yet assigned to any account (legacy or skipped)
+  const unInc = sum(tx.filter((t) => t.kind === 'income' && !t.account))
+  const unExp = sum(tx.filter((t) => t.kind === 'expense' && !t.account))
+  const unassigned = { income: unInc, expense: unExp, net: unInc - unExp, has: unInc > 0 || unExp > 0 }
+  return { views, spendableTotal, savingsTotal, netWorth: spendableTotal + savingsTotal, unassigned }
+}
+
+export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { range, selMonth, txFilter }) {
   const inScope = (d) => {
     if (range === 'all') return true
     if (range === 'year') return d.slice(0, 4) === YEAR
@@ -180,6 +215,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, sel
       title: t.desc || (cat ? cat.name : '') || (isInc ? 'Income' : 'Expense'),
       catName: isInc ? 'Income' : (cat ? cat.name : 'Expense'), catColor: color, chipBg: rgba(color, 0.16),
       initial: isInc ? '↑' : '↓', amountStr: (isInc ? '+ ' : '− ') + fmt(t.amount), amountColor: isInc ? '#1FA779' : '#E5577A',
+      account: t.account || '', accountLabel: t.account ? ((isInc ? 'to ' : 'from ') + t.account) : '',
       dateStr: dateLabel(t.date), raw: t,
     }
   }
@@ -197,6 +233,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, sel
       title: (isDep ? 'Saved to ' : 'Withdrew from ') + name,
       catName: isDep ? 'Saving' : 'Withdrawal', catColor: color, chipBg: rgba(color, 0.16),
       initial: isDep ? '↓' : '↑', amountStr: (isDep ? '− ' : '+ ') + fmt(c.amount), amountColor: isDep ? '#1E9BD7' : '#1FA779',
+      account: c.wallet || '', accountLabel: c.wallet ? ((isDep ? 'from ' : 'to ') + c.wallet) : '',
       dateStr: dateLabel(c.date), raw: c,
     }
   }
@@ -205,6 +242,8 @@ export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, sel
   const recent = feed.slice(0, 6)
   const filtered = feed.filter((t) => (txFilter === 'all' ? true : t.kind === txFilter))
   const net = periodIncome - periodExpense
+
+  const accountsView = deriveAccounts(accounts, tx, contribs)
 
   const periodLabel = range === 'all' ? 'All time' : (range === 'year' ? ('Year ' + YEAR) : monthFull(selMonth))
   const periodShort = range === 'all' ? 'all time' : (range === 'year' ? YEAR : monthLabel(selMonth))
@@ -216,6 +255,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, sel
     items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs,
     reminders, reminderCount, hasReminder, reminderSummary, bellReminders, bellSummary,
     recent, filtered, net, periodLabel, periodShort,
+    accounts: accountsView.views, accountsInfo: accountsView,
     hasDebt: totalDebt > 0,
   }
 }

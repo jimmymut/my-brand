@@ -138,7 +138,7 @@ export default function OverviewTab({ d, setTab, onSavingCell }) {
                 <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: t.chipBg, color: t.catColor }}>{t.initial}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
-                  <div style={{ fontSize: 12, color: 'var(--muted3)' }}>{t.catName} · {t.dateStr}</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted3)' }}>{t.catName}{t.accountLabel ? ' · ' + t.accountLabel : ''} · {t.dateStr}</div>
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: t.amountColor }}>{t.amountStr}</div>
               </div>

@@ -51,7 +51,10 @@ export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDe
         ) : rows.map((t) => (
           <div key={t.id} style={{ display: 'grid', gridTemplateColumns: COLS, gap: 14, padding: '15px 22px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
             <div style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: t.chipBg, color: t.catColor }}>{t.initial}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+              {t.accountLabel && <div style={{ fontSize: 11.5, color: 'var(--muted3)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.accountLabel}</div>}
+            </div>
             <div><span style={{ fontSize: 12.5, fontWeight: 600, padding: '4px 10px', borderRadius: 7, background: t.chipBg, color: t.catColor }}>{t.catName}</span></div>
             <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>{t.dateStr}</div>
             <div style={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: t.amountColor }}>{t.amountStr}</div>

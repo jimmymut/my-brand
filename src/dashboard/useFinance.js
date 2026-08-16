@@ -20,6 +20,7 @@ export function useFinance() {
   const [contribs, setContribs] = useState([])
   const [budgetItems, setBudgetItems] = useState([])
   const [goals, setGoals] = useState([])
+  const [accounts, setAccounts] = useState([])
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = budgetItems }, [budgetItems])
 
@@ -29,6 +30,7 @@ export function useFinance() {
     if (Array.isArray(s.contribs)) setContribs(s.contribs)
     if (Array.isArray(s.budgetItems)) setBudgetItems(s.budgetItems)
     if (Array.isArray(s.goals)) setGoals(s.goals)
+    if (Array.isArray(s.accounts)) setAccounts(s.accounts)
   }, [])
   const resync = useCallback(() => { Finance.state().then(hydrate).catch(() => {}) }, [hydrate])
 
@@ -158,5 +160,24 @@ export function useFinance() {
     } catch (e) { writeError('change', e) }
   }, [writeError])
 
-  return { tx, contribs, budgetItems, goals, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal }
+  /* ---------------------------------------------- accounts (confirm-first) */
+  const saveAccount = useCallback(async (rec) => {
+    try {
+      if (rec.id) {
+        await Finance.updateAccount(rec.id, rec)
+        setAccounts((cur) => cur.map((a) => (a.id === rec.id ? { ...a, ...rec } : a)))
+        resync() // a rename cascades to tx/contribs/goals — pull the fresh state
+      } else {
+        const saved = await Finance.addAccount(rec)
+        setAccounts((cur) => cur.concat([docId(saved) ? saved : { ...rec, id: uid() }]))
+      }
+    } catch (e) { writeError('account', e); throw e }
+  }, [writeError, resync])
+
+  const removeAccount = useCallback(async (id) => {
+    try { await Finance.removeAccount(id); setAccounts((cur) => cur.filter((a) => a.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
+
+  return { tx, contribs, budgetItems, goals, accounts, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal, saveAccount, removeAccount }
 }
