@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useFinance } from './useFinance'
 import { useDebts } from './useDebts'
-import { deriveFinance } from './derive'
+import { deriveFinance, deriveBudget } from './derive'
 import { deriveDebts } from './deriveDebts'
-import { BUCKETS, CATS, CURRENT, MONTHS, SAVINGS_MONTHS, GOAL_COLORS } from '../lib/constants'
-import { monthLabel, today, uid } from '../lib/format'
+import { BUCKETS, CATS, CURRENT, MONTHS, SAVINGS_MONTHS, GOAL_COLORS, ymIndex, ymFromIndex } from '../lib/constants'
+import { monthLabel, monthFull, today, uid } from '../lib/format'
 import { Posts, Skills, Work, Messages } from '../api/resources'
 import { api } from '../api/client'
 import { useToast } from '../components/Toast'
@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [selMonth, setSelMonth] = useState(CURRENT)
   const [txFilter, setTxFilter] = useState('all')
   const [debtFilter, setDebtFilter] = useState('all')
+  const [budgetMonth, setBudgetMonth] = useState(CURRENT) // the month the Budget tab is planning
   const [bellOpen, setBellOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -63,6 +64,18 @@ export default function Dashboard() {
     [fin.tx, fin.contribs, fin.budgetItems, fin.goals, range, selMonth, txFilter]
   )
 
+  // the Budget tab plans a month of its own (incl. future months) — derived
+  // separately so navigating it never disturbs the current-month reminders
+  const budgetView = useMemo(
+    () => deriveBudget(fin.budgetItems, fin.tx, fin.contribs, budgetMonth),
+    [fin.budgetItems, fin.tx, fin.contribs, budgetMonth]
+  )
+  // months that already have a plan you could copy from (excluding the one open)
+  const budgetSourceMonths = useMemo(() => {
+    const set = new Set(fin.budgetItems.map((it) => it.month || CURRENT))
+    return Array.from(set).filter((m) => m !== budgetMonth).sort((a, b) => (a < b ? 1 : -1))
+  }, [fin.budgetItems, budgetMonth])
+
   const debtD = useMemo(() => deriveDebts(debtStore.debts, debtFilter), [debtStore.debts, debtFilter])
 
   const counts = {
@@ -89,7 +102,7 @@ export default function Dashboard() {
     }
     else if (kind === 'post') initial = { title: '', excerpt: '', tag: 'Frontend', customTopic: '', image: '' }
     else if (kind === 'skill') initial = { name: '', desc: '', level: 75, icon: '' }
-    else if (kind === 'budgetItem') initial = { name: '', amount: '', priority: 'low' }
+    else if (kind === 'budgetItem') initial = { name: '', amount: '', priority: 'low', month: budgetMonth }
     else if (kind === 'goal') initial = { name: '', target: '', account: '', color: GOAL_COLORS[0], startMonth: CURRENT }
     else if (kind === 'goalTarget') initial = { target: '', month: CURRENT, ...(preset || {}) }
     else if (kind === 'debt') initial = { direction: 'borrowed', name: '', amount: '', date: today(), due: '', desc: '' }
@@ -141,6 +154,32 @@ export default function Dashboard() {
 
   const openDebtPayment = (row) => openModal('debtPayment', null, { debtId: row.id, _party: row.party, _remainingStr: row.remainingStr })
 
+  /* -------------------------------------------------------- budget month nav */
+  // step the Budget tab's month within [savings start, one year ahead]
+  const shiftBudgetMonth = (delta) => {
+    const min = ymIndex(MONTHS[0])
+    const max = ymIndex(CURRENT) + 12
+    const next = Math.min(max, Math.max(min, ymIndex(budgetMonth) + delta))
+    setBudgetMonth(ymFromIndex(next))
+  }
+  const canPrevBudget = ymIndex(budgetMonth) > ymIndex(MONTHS[0])
+  const canNextBudget = ymIndex(budgetMonth) < ymIndex(CURRENT) + 12
+
+  // clone another month's plan into the month currently open
+  const copyBudgetFrom = async (fromMonth) => {
+    const ids = fin.budgetItems
+      .filter((it) => (it.month || CURRENT) === fromMonth)
+      .sort((a, b) => (a.order || 0) - (b.order || 0))
+      .map((it) => it.id)
+    if (!ids.length) return
+    try {
+      const created = await fin.copyBudget(ids, budgetMonth)
+      toast(created.length
+        ? `Copied ${created.length} item${created.length > 1 ? 's' : ''} from ${monthFull(fromMonth)}.`
+        : `Every item from ${monthFull(fromMonth)} is already in ${monthFull(budgetMonth)}.`)
+    } catch { /* store already surfaced a toast */ }
+  }
+
   /* ---------------------------------------------------------- modal save */
   // Confirm-first: wait for the backend, apply the saved record, then close the
   // modal. On failure the modal stays open (a toast explains) so nothing shows
@@ -155,7 +194,7 @@ export default function Dashboard() {
       } else if (k === 'saving') {
         await fin.saveContrib({ id, bucket: f.bucket, amount: f.amount, month: f.month, date: f.date, account: f.account || '', kind: f.kind || 'deposit' })
       } else if (k === 'budgetItem') {
-        await fin.saveBudgetItem({ id, name: f.name, amount: f.amount, spent: f.spent != null ? f.spent : 0, priority: f.priority || 'low' })
+        await fin.saveBudgetItem({ id, name: f.name, amount: f.amount, spent: f.spent != null ? f.spent : 0, priority: f.priority || 'low', month: f.month || budgetMonth })
       } else if (k === 'goal') {
         // base target is set on creation; later changes go through goalTarget so
         // past months keep their old target (see openAdjustTarget)
@@ -309,7 +348,7 @@ export default function Dashboard() {
           {tab === 'overview' && <OverviewTab d={derived} setTab={setTab} onSavingCell={openSavingCell} />}
           {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(raw) => openModal(raw.kind, raw)} onDelete={fin.removeTx} />}
           {tab === 'savings' && <SavingsTab d={derived} recordMonth={recordMonth} onSavingCell={openSavingCell} onWithdraw={(b) => openModal('saving', null, { bucket: b.id, month: recordMonth, kind: 'withdrawal', amount: '', account: b.account })} onAddGoal={() => openModal('goal')} onEditGoal={(g) => openModal('goal', g)} onDeleteGoal={fin.removeGoal} onAdjustTarget={openAdjustTarget} />}
-          {tab === 'budget' && <BudgetTab d={derived} onAddItem={() => openModal('budgetItem')} onEditItem={(it) => openModal('budgetItem', it)} onDeleteItem={fin.removeBudgetItem} onSpentChange={fin.updateItemSpent} onReorder={fin.reorderBudgetItems} />}
+          {tab === 'budget' && <BudgetTab d={budgetView} month={budgetMonth} canPrev={canPrevBudget} canNext={canNextBudget} onPrevMonth={() => shiftBudgetMonth(-1)} onNextMonth={() => shiftBudgetMonth(1)} sourceMonths={budgetSourceMonths} onCopyFrom={copyBudgetFrom} onAddItem={() => openModal('budgetItem')} onEditItem={(it) => openModal('budgetItem', it)} onDeleteItem={fin.removeBudgetItem} onSpentChange={fin.updateItemSpent} onReorder={fin.reorderBudgetItems} />}
           {tab === 'blog' && <BlogTab posts={posts} onEdit={(p) => openModal('post', p)} onDelete={deletePost} />}
           {tab === 'messages' && <MessagesTab messages={messages} onToggleRead={toggleRead} onDelete={deleteMessage} />}
           {tab === 'skills' && <SkillsTab skills={skills} onEdit={(s) => openModal('skill', s)} onDelete={deleteSkill} />}

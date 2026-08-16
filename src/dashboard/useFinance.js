@@ -128,6 +128,15 @@ export function useFinance() {
     catch (e) { writeError('change', e) }
   }, [writeError])
 
+  // clone the given plan items into a month (spent reset); confirm-first
+  const copyBudget = useCallback(async (itemIds, toMonth) => {
+    try {
+      const created = await Finance.copyBudget(itemIds, toMonth)
+      if (Array.isArray(created) && created.length) setBudgetItems((cur) => cur.concat(created))
+      return Array.isArray(created) ? created : []
+    } catch (e) { writeError('budget copy', e); throw e }
+  }, [writeError])
+
   /* ------------------------------------------------ savings goals (confirm-first) */
   const saveGoal = useCallback(async (rec) => {
     try {
@@ -149,5 +158,5 @@ export function useFinance() {
     } catch (e) { writeError('change', e) }
   }, [writeError])
 
-  return { tx, contribs, budgetItems, goals, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, saveGoal, removeGoal }
+  return { tx, contribs, budgetItems, goals, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal }
 }

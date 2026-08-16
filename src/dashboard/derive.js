@@ -23,6 +23,36 @@ export function targetAt(base, schedule, mk) {
   return t
 }
 
+// Budget for a single month. Plan items are scoped by their `month` (legacy
+// items with no month count as the current month). `budgetSegs` shows that
+// month's recorded expenses + savings set aside, for reference.
+export function deriveBudget(budgetItems, tx, contribs, month) {
+  const items = (budgetItems || []).filter((it) => (it.month || CURRENT) === month).map((it) => {
+    const sp = it.spent || 0
+    const rem = (it.amount || 0) - sp
+    const priority = it.priority || 'low'
+    const pm = priorityMeta(priority)
+    return { id: it.id, name: it.name, amount: it.amount, valueStr: fmt(it.amount), spent: sp, spentVal: sp, spentStr: fmt(sp), remaining: rem, remainingStr: fmt(rem), remainingColor: rem < 0 ? '#E5577A' : 'var(--text2)', priority, priorityLabel: pm.label, priorityColor: pm.color, priorityRank: pm.rank, order: it.order || 0, month: it.month || CURRENT }
+  }).sort((a, b) => a.order - b.order) // manual drag order
+  const plannedTotal = items.reduce((a, it) => a + (it.amount || 0), 0)
+  const spentTotal = items.reduce((a, it) => a + (it.spent || 0), 0)
+  const remainingTotal = plannedTotal - spentTotal
+  const budget = plannedTotal
+  const budgetSpent = spentTotal
+  const budgetRemaining = budget - budgetSpent
+  const budgetPctInt = budget > 0 ? Math.round(budgetSpent / budget * 100) : 0
+  const budgetOver = budget > 0 && budgetSpent > budget
+  const budgetNear = budget > 0 && !budgetOver && budgetSpent / budget >= 0.8
+  const budgetColor = budgetOver ? '#E5577A' : (budgetNear ? '#D08700' : '#1FA779')
+
+  const savedForMonth = (contribs || []).filter((c) => c.month === month && c.kind !== 'withdrawal').reduce((a, c) => a + (c.amount || 0), 0)
+  let budgetSegs = CATS.map((c) => ({ name: c.name, color: c.color, value: (tx || []).filter((t) => t.kind === 'expense' && t.category === c.id && t.date.slice(0, 7) === month).reduce((a, t) => a + t.amount, 0) })).filter((s) => s.value > 0)
+  if (savedForMonth > 0) budgetSegs.push({ name: 'Savings set aside', color: '#38BDF8', value: savedForMonth })
+  budgetSegs.forEach((s) => { s.valueStr = fmt(s.value); s.pctStr = budget > 0 ? Math.round(s.value / budget * 100) + '%' : '—'; s.widthStr = budget > 0 ? Math.min(100, s.value / budget * 100) + '%' : '0%' })
+
+  return { month, items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs }
+}
+
 export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, selMonth, txFilter }) {
   const inScope = (d) => {
     if (range === 'all') return true
@@ -116,28 +146,9 @@ export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, sel
   const targetTotal = buckets.reduce((a, b) => a + b.target, 0)
   const savedRealMonth = buckets.reduce((a, b) => a + b.thisMonth, 0)
 
-  // budget (driven by the budget-plan items)
-  const items = (budgetItems || []).map((it) => {
-    const sp = it.spent || 0
-    const rem = (it.amount || 0) - sp
-    const priority = it.priority || 'low'
-    const pm = priorityMeta(priority)
-    return { id: it.id, name: it.name, amount: it.amount, valueStr: fmt(it.amount), spent: sp, spentVal: sp, spentStr: fmt(sp), remaining: rem, remainingStr: fmt(rem), remainingColor: rem < 0 ? '#E5577A' : 'var(--text2)', priority, priorityLabel: pm.label, priorityColor: pm.color, priorityRank: pm.rank, order: it.order || 0 }
-  }).sort((a, b) => a.order - b.order) // manual drag order
-  const plannedTotal = items.reduce((a, it) => a + (it.amount || 0), 0)
-  const spentTotal = items.reduce((a, it) => a + (it.spent || 0), 0)
-  const remainingTotal = plannedTotal - spentTotal
-  const budget = plannedTotal
-  const budgetSpent = spentTotal
-  const budgetRemaining = budget - budgetSpent
-  const budgetPctInt = budget > 0 ? Math.round(budgetSpent / budget * 100) : 0
-  const budgetOver = budget > 0 && budgetSpent > budget
-  const budgetNear = budget > 0 && !budgetOver && budgetSpent / budget >= 0.8
-  const budgetColor = budgetOver ? '#E5577A' : (budgetNear ? '#D08700' : '#1FA779')
-
-  let budgetSegs = CATS.map((c) => ({ name: c.name, color: c.color, value: tx.filter((t) => t.kind === 'expense' && t.category === c.id && t.date.slice(0, 7) === CURRENT).reduce((a, t) => a + t.amount, 0) })).filter((s) => s.value > 0)
-  if (savedRealMonth > 0) budgetSegs.push({ name: 'Savings set aside', color: '#38BDF8', value: savedRealMonth })
-  budgetSegs.forEach((s) => { s.valueStr = fmt(s.value); s.pctStr = budget > 0 ? Math.round(s.value / budget * 100) + '%' : '—'; s.widthStr = budget > 0 ? Math.min(100, s.value / budget * 100) + '%' : '0%' })
+  // budget for the CURRENT month (reminders/overview/bell). The Budget tab shows
+  // a month it picks itself, via a separate deriveBudget() call in the Dashboard.
+  const { items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs } = deriveBudget(budgetItems, tx, contribs, CURRENT)
 
   // reminders (real current month)
   const dueB = buckets.filter((b) => b.thisMonth < b.target)
