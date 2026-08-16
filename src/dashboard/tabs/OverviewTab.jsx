@@ -42,7 +42,11 @@ export default function OverviewTab({ d, setTab, onSavingCell }) {
         <div style={{ position: 'relative', overflow: 'hidden', padding: 22, borderRadius: 18, background: 'linear-gradient(160deg,rgba(52,211,153,0.16),rgba(16,185,129,0.04))', border: '1px solid rgba(52,211,153,0.22)' }}>
           <div style={{ fontSize: 13, color: '#3BA883', fontWeight: 700, marginBottom: 10 }}>Available balance</div>
           <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 29, color: 'var(--strong)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}>{fmt(d.balance)}</div>
-          <div style={{ fontSize: 12.5, color: 'var(--muted2)', marginTop: 8 }}>Running total · all time</div>
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 3, fontSize: 11.5, color: 'var(--muted2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><span>Income</span><span style={{ color: '#1FA779', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>+ {fmt(d.totalIncome)}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><span>Expenses</span><span style={{ color: '#E5577A', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>− {fmt(d.totalExpense)}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}><span>Saved (set aside)</span><span style={{ color: '#1E9BD7', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>− {fmt(d.totalSaved)}</span></div>
+          </div>
         </div>
         <div style={card}>
           <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, marginBottom: 10 }}>Income · {d.periodShort}</div>
@@ -87,7 +91,7 @@ export default function OverviewTab({ d, setTab, onSavingCell }) {
                 <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ width: 10, height: 10, borderRadius: 3, flexShrink: 0, background: c.color }} />
                   <span style={{ fontSize: 13, color: 'var(--text2)', flex: 1 }}>{c.name}</span>
-                  <span style={{ fontSize: 12.5, color: 'var(--muted2)', fontVariantNumeric: 'tabular-nums' }}>{c.pctStr}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--muted2)', fontVariantNumeric: 'tabular-nums' }}>{fmt(c.value)} · {c.pctStr}</span>
                 </div>
               ))}
             </div>

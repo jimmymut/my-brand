@@ -176,23 +176,41 @@ export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, sel
     const cat = CATS.find((c) => c.id === t.category)
     const color = isInc ? '#34D399' : (cat ? cat.color : '#94A3B8')
     return {
-      id: t.id, kind: t.kind, isIncome: isInc,
+      id: t.id, kind: t.kind, isIncome: isInc, date: t.date,
       title: t.desc || (cat ? cat.name : '') || (isInc ? 'Income' : 'Expense'),
       catName: isInc ? 'Income' : (cat ? cat.name : 'Expense'), catColor: color, chipBg: rgba(color, 0.16),
       initial: isInc ? '↑' : '↓', amountStr: (isInc ? '+ ' : '− ') + fmt(t.amount), amountColor: isInc ? '#1FA779' : '#E5577A',
       dateStr: dateLabel(t.date), raw: t,
     }
   }
-  const sortedScope = scopeTx.slice().sort((a, b) => (a.date < b.date ? 1 : -1))
-  const recent = sortedScope.slice(0, 6).map(disp)
-  const filtered = sortedScope.filter((t) => (txFilter === 'all' ? true : t.kind === txFilter)).map(disp)
+  // Savings deposits/withdrawals shown as distinct ledger rows (so you never have
+  // to log a saving as an expense). A deposit leaves your spendable balance (−);
+  // a withdrawal returns to it (+). These are NOT expenses — the balance already
+  // accounts for them via `saved`, so they must not be double-counted.
+  const savingDisp = (c) => {
+    const isDep = c.kind !== 'withdrawal'
+    const b = buckets.find((x) => x.id === c.bucket)
+    const name = b ? (b.short || b.name) : 'Savings'
+    const color = (b && b.color) || '#38BDF8'
+    return {
+      id: c.id, kind: 'saving', isIncome: !isDep, isSaving: true, date: c.date,
+      title: (isDep ? 'Saved to ' : 'Withdrew from ') + name,
+      catName: isDep ? 'Saving' : 'Withdrawal', catColor: color, chipBg: rgba(color, 0.16),
+      initial: isDep ? '↓' : '↑', amountStr: (isDep ? '− ' : '+ ') + fmt(c.amount), amountColor: isDep ? '#1E9BD7' : '#1FA779',
+      dateStr: dateLabel(c.date), raw: c,
+    }
+  }
+  const scopeContribs = contribs.filter((c) => inScope(c.date))
+  const feed = scopeTx.map(disp).concat(scopeContribs.map(savingDisp)).sort((a, b) => (a.date < b.date ? 1 : -1))
+  const recent = feed.slice(0, 6)
+  const filtered = feed.filter((t) => (txFilter === 'all' ? true : t.kind === txFilter))
   const net = periodIncome - periodExpense
 
   const periodLabel = range === 'all' ? 'All time' : (range === 'year' ? ('Year ' + YEAR) : monthFull(selMonth))
   const periodShort = range === 'all' ? 'all time' : (range === 'year' ? YEAR : monthLabel(selMonth))
 
   return {
-    scopeTx, balance, periodIncome, periodExpense, savedInScope, totalSaved, totalDebt,
+    scopeTx, balance, totalIncome, totalExpense, periodIncome, periodExpense, savedInScope, totalSaved, totalDebt,
     incomeCount: scopeTx.filter((t) => t.kind === 'income').length, expenseCount: scopeTx.filter((t) => t.kind === 'expense').length,
     monthData, catData, buckets, targetTotal, savedRealMonth,
     items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs,

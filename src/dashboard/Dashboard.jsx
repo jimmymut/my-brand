@@ -307,12 +307,12 @@ export default function Dashboard() {
   // cell goes back to "due"/"missed" (lets you un-mark a wrongly-recorded month).
   const removeSavingContrib = () => {
     const init = modal && modal.initial
-    if (init && init.bucket && init.month) {
+    if (init && init._id) {
+      fin.removeContrib(init._id) // editing one ledger entry — remove just it
+    } else if (init && init.bucket && init.month) {
       fin.contribs
         .filter((c) => c.bucket === init.bucket && c.month === init.month && c.kind !== 'withdrawal')
         .forEach((c) => fin.removeContrib(c.id))
-    } else if (init && init._id) {
-      fin.removeContrib(init._id)
     }
     setModal(null)
   }
@@ -346,7 +346,7 @@ export default function Dashboard() {
 
         <div style={{ padding: '28px 32px 60px' }}>
           {tab === 'overview' && <OverviewTab d={derived} setTab={setTab} onSavingCell={openSavingCell} />}
-          {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(raw) => openModal(raw.kind, raw)} onDelete={fin.removeTx} />}
+          {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(t) => openModal(t.kind, t.raw)} onDelete={(t) => (t.kind === 'saving' ? fin.removeContrib(t.raw.id) : fin.removeTx(t.raw.id))} />}
           {tab === 'savings' && <SavingsTab d={derived} recordMonth={recordMonth} onSavingCell={openSavingCell} onWithdraw={(b) => openModal('saving', null, { bucket: b.id, month: recordMonth, kind: 'withdrawal', amount: '', account: b.account })} onAddGoal={() => openModal('goal')} onEditGoal={(g) => openModal('goal', g)} onDeleteGoal={fin.removeGoal} onAdjustTarget={openAdjustTarget} />}
           {tab === 'budget' && <BudgetTab d={budgetView} month={budgetMonth} canPrev={canPrevBudget} canNext={canNextBudget} onPrevMonth={() => shiftBudgetMonth(-1)} onNextMonth={() => shiftBudgetMonth(1)} sourceMonths={budgetSourceMonths} onCopyFrom={copyBudgetFrom} onAddItem={() => openModal('budgetItem')} onEditItem={(it) => openModal('budgetItem', it)} onDeleteItem={fin.removeBudgetItem} onSpentChange={fin.updateItemSpent} onReorder={fin.reorderBudgetItems} />}
           {tab === 'blog' && <BlogTab posts={posts} onEdit={(p) => openModal('post', p)} onDelete={deletePost} />}
