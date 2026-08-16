@@ -136,4 +136,7 @@ export const Finance = {
   updateDebt: (id, d) => api.patch(`/finance/debts/${id}`, d, true),
   removeDebt: (id) => api.del(`/finance/debts/${id}`, true),
   addDebtPayment: (id, payment) => api.post(`/finance/debts/${id}/payments`, payment, true),
+  addGoal: (g) => api.post('/finance/goals', g, true),
+  updateGoal: (id, g) => api.patch(`/finance/goals/${id}`, g, true),
+  removeGoal: (id) => api.del(`/finance/goals/${id}`, true),
 }

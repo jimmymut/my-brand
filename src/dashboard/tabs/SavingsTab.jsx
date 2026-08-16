@@ -1,13 +1,29 @@
 import Hover from '../../components/Hover'
+import AsyncButton from '../../components/AsyncButton'
 import { fmt, monthLabel } from '../../lib/format'
 import { CURRENT } from '../../lib/constants'
 
 const card = { padding: '20px 22px', borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }
 
-export default function SavingsTab({ d, recordMonth, onSavingCell, onWithdraw }) {
+// group monthly-record cells into [year, months[]] sections, ascending by year
+function groupByYear(cells) {
+  const map = new Map()
+  cells.forEach((m) => {
+    const y = String(m.month).slice(0, 4)
+    if (!map.has(y)) map.set(y, [])
+    map.get(y).push(m)
+  })
+  return Array.from(map.entries()).sort((a, b) => Number(a[0]) - Number(b[0]))
+}
+
+export default function SavingsTab({ d, recordMonth, onSavingCell, onWithdraw, onAddGoal, onEditGoal, onDeleteGoal, onAdjustTarget }) {
   const savedRealMonthPct = Math.round((d.savedRealMonth / d.targetTotal) * 100) + '%'
   return (
     <div>
+      <div className="noprint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ fontSize: 13.5, color: 'var(--muted2)' }}>{d.buckets.length} goals · {fmt(d.targetTotal)}/mo target</div>
+        <button onClick={onAddGoal} style={{ display: 'flex', alignItems: 'center', gap: 7, height: 38, padding: '0 16px', border: 'none', borderRadius: 11, cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', boxShadow: '0 8px 20px rgba(16,185,129,0.26)' }}><span style={{ fontSize: 17, lineHeight: 1 }}>+</span> New goal</button>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 18, marginBottom: 22 }}>
         <div style={card}>
           <div style={{ fontSize: 13, color: 'var(--muted)', fontWeight: 600, marginBottom: 8 }}>Monthly target</div>
@@ -42,6 +58,15 @@ export default function SavingsTab({ d, recordMonth, onSavingCell, onWithdraw })
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {b.account && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', background: 'var(--fill)', border: '1px solid var(--border2)', padding: '4px 9px', borderRadius: 8 }}>{b.account}</span>}
                 {b.hasDebt && <span style={{ fontSize: 11, fontWeight: 700, color: '#E5577A', background: 'rgba(251,113,133,0.13)', border: '1px solid rgba(251,113,133,0.3)', padding: '4px 9px', borderRadius: 8 }}>Debt {b.debtStr}</span>}
+                <span className="noprint" style={{ display: 'flex', gap: 6 }}>
+                  {onAdjustTarget && <Hover onClick={() => onAdjustTarget(b)} title="Adjust monthly target (from a chosen month)" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>◎</Hover>}
+                  {b.custom && (
+                    <>
+                      <Hover onClick={() => onEditGoal(b)} title="Edit goal" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 12 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
+                      <AsyncButton onClick={() => onDeleteGoal(b.id)} title="Delete goal" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
+                    </>
+                  )}
+                </span>
               </div>
             </div>
 
@@ -59,12 +84,19 @@ export default function SavingsTab({ d, recordMonth, onSavingCell, onWithdraw })
             </div>
 
             <div style={{ fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--muted3)', fontWeight: 700, marginBottom: 9 }}>Monthly record · tap to update</div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 7, marginBottom: 18 }}>
-              {b.byMonth.map((m) => (
-                <button key={m.month} onClick={() => onSavingCell(b.id, m.month)} title={m.amountStr} className="noprint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '9px 2px', borderRadius: 9, cursor: 'pointer', background: m.bg, border: `1px solid ${m.bd}` }}>
-                  <span style={{ fontSize: 11.5, fontWeight: 700, color: m.fg }}>{m.label}</span>
-                  <span style={{ fontSize: 11, color: m.fg }}>{m.mark}</span>
-                </button>
+            <div style={{ marginBottom: 18 }}>
+              {groupByYear(b.byMonth).map(([year, months]) => (
+                <div key={year} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--muted4)', marginBottom: 5 }}>{year}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 7 }}>
+                    {months.map((m) => (
+                      <button key={m.month} onClick={() => onSavingCell(b.id, m.month)} title={`${m.label} ${year} · ${m.amountStr}`} className="noprint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '9px 2px', borderRadius: 9, cursor: 'pointer', background: m.bg, border: `1px solid ${m.bd}` }}>
+                        <span style={{ fontSize: 11.5, fontWeight: 700, color: m.fg }}>{m.label}</span>
+                        <span style={{ fontSize: 11, color: m.fg }}>{m.mark}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
 

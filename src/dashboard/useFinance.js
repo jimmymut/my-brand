@@ -19,6 +19,7 @@ export function useFinance() {
   const [tx, setTx] = useState([])
   const [contribs, setContribs] = useState([])
   const [budgetItems, setBudgetItems] = useState([])
+  const [goals, setGoals] = useState([])
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = budgetItems }, [budgetItems])
 
@@ -27,6 +28,7 @@ export function useFinance() {
     if (Array.isArray(s.tx)) setTx(s.tx)
     if (Array.isArray(s.contribs)) setContribs(s.contribs)
     if (Array.isArray(s.budgetItems)) setBudgetItems(s.budgetItems)
+    if (Array.isArray(s.goals)) setGoals(s.goals)
   }, [])
   const resync = useCallback(() => { Finance.state().then(hydrate).catch(() => {}) }, [hydrate])
 
@@ -126,5 +128,26 @@ export function useFinance() {
     catch (e) { writeError('change', e) }
   }, [writeError])
 
-  return { tx, contribs, budgetItems, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem }
+  /* ------------------------------------------------ savings goals (confirm-first) */
+  const saveGoal = useCallback(async (rec) => {
+    try {
+      if (rec.id) {
+        await Finance.updateGoal(rec.id, rec)
+        setGoals((cur) => cur.map((g) => (g.id === rec.id ? { ...g, ...rec } : g)))
+      } else {
+        const saved = await Finance.addGoal(rec)
+        setGoals((cur) => cur.concat([saved && (saved.id || saved._id) ? saved : { ...rec, id: uid() }]))
+      }
+    } catch (e) { writeError('goal', e); throw e }
+  }, [writeError])
+
+  const removeGoal = useCallback(async (id) => {
+    try {
+      await Finance.removeGoal(id)
+      setGoals((cur) => cur.filter((g) => g.id !== id))
+      setContribs((cur) => cur.filter((c) => c.bucket !== id)) // its contributions are removed too
+    } catch (e) { writeError('change', e) }
+  }, [writeError])
+
+  return { tx, contribs, budgetItems, goals, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, saveGoal, removeGoal }
 }

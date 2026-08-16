@@ -11,7 +11,9 @@ function normalize(user) {
   return {
     ...user,
     name,
-    isAdmin: user.title === 'admin' || !!user.isAdmin,
+    // admin is derived ONLY from the server-provided role, never from a
+    // pre-existing/stale isAdmin flag on the object
+    isAdmin: user.title === 'admin',
   }
 }
 

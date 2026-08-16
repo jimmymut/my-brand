@@ -70,6 +70,12 @@ export default function Auth({ mode }) {
     setForm({}); setErr(''); setNotice('')
   }, [mode])
 
+  // after a successful login, send admins to the dashboard, everyone else home
+  const landAfter = (res) => {
+    const u = res && res.user
+    navigate(u && (u.title === 'admin' || u.isAdmin) ? '/dashboard' : '/')
+  }
+
   /* ----------------------------------------------------------- login/reg */
   const submit = async () => {
     setErr('')
@@ -91,7 +97,7 @@ export default function Auth({ mode }) {
       if (!emailOk(email)) return setErr('Enter a valid email address')
       if (!form.pass) return setErr('Please enter your password')
       setBusy(true)
-      try { await login(email, form.pass); navigate('/') }
+      try { landAfter(await login(email, form.pass)) }
       catch (e) { setErr(e.message || 'Email or password is incorrect') }
       finally { setBusy(false) }
     }
@@ -157,7 +163,7 @@ export default function Auth({ mode }) {
   // real OAuth: exchange the authorization code with the backend
   const handleGoogleCode = async (code) => {
     setErr('')
-    try { await googleSignIn(null, code); navigate('/') } catch (e) { setErr(e.message || 'Google sign-in failed') }
+    try { landAfter(await googleSignIn(null, code)) } catch (e) { setErr(e.message || 'Google sign-in failed') }
   }
   // fallback (no client id configured): simulated account picker from the design
   const pickGoogle = async (acc) => {

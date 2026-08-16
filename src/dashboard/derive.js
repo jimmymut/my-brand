@@ -1,5 +1,5 @@
 // Pure finance computations ported from the dashboard prototype's renderVals().
-import { BUCKETS, CATS, CURRENT, YEAR, MONTHS, priorityMeta } from '../lib/constants'
+import { BUCKETS, CATS, CURRENT, YEAR, MONTHS, priorityMeta, goalMonths } from '../lib/constants'
 import { fmt, monthLabel, monthFull, dateLabel, rgba } from '../lib/format'
 
 const STATUS = {
@@ -7,9 +7,23 @@ const STATUS = {
   partial: { bg: 'rgba(251,191,36,0.16)', fg: '#C98A00', bd: 'rgba(251,191,36,0.45)', mark: '½' },
   missed: { bg: 'rgba(251,113,133,0.14)', fg: '#E5577A', bd: 'rgba(251,113,133,0.42)', mark: '✕' },
   due: { bg: 'var(--fill)', fg: 'var(--muted3)', bd: 'var(--border2)', mark: '·' },
+  future: { bg: 'transparent', fg: 'var(--muted4)', bd: 'var(--border)', mark: '+' }, // ahead of time — tap to pre-fund
 }
 
-export function deriveFinance({ tx, contribs, budgetItems }, { range, selMonth, txFilter }) {
+// Effective monthly target for a given month: the latest schedule breakpoint at
+// or before `mk`, else the goal's base target. Lets targets change over time
+// without rewriting the amount past months were owed.
+export function targetAt(base, schedule, mk) {
+  let t = Number(base) || 0
+  const sorted = (schedule || []).slice().sort((a, b) => (String(a.month) < String(b.month) ? -1 : 1))
+  for (const s of sorted) {
+    if (String(s.month) <= String(mk)) t = Number(s.target) || 0
+    else break
+  }
+  return t
+}
+
+export function deriveFinance({ tx, contribs, budgetItems, goals }, { range, selMonth, txFilter }) {
   const inScope = (d) => {
     if (range === 'all') return true
     if (range === 'year') return d.slice(0, 4) === YEAR
@@ -38,33 +52,62 @@ export function deriveFinance({ tx, contribs, budgetItems }, { range, selMonth, 
   catData.sort((a, b) => b.value - a.value)
   catData.forEach((c) => { c.pct = periodExpense ? Math.round(c.value / periodExpense * 100) : 0; c.pctStr = c.pct + '%' })
 
-  const buckets = BUCKETS.map((b) => {
+  // built-in goals + user-created custom goals. Goal docs flagged `overrideFor`
+  // aren't standalone goals — they only carry target-schedule overrides for a
+  // built-in bucket, so they're pulled out here and applied by id below.
+  const allGoals = goals || []
+  const overrides = allGoals.filter((g) => g.overrideFor)
+  const overrideScheduleFor = (bid) => {
+    const o = overrides.find((x) => x.overrideFor === bid)
+    return (o && o.targetSchedule) || []
+  }
+  const goalDefs = allGoals.filter((g) => !g.overrideFor).map((g) => ({
+    id: g.id, name: g.name || 'Goal', short: g.short || g.name || 'Goal', sub: g.sub || 'Custom goal',
+    target: g.target || 0, color: g.color || '#34D399', account: g.account || '',
+    startMonth: g.startMonth || CURRENT, custom: true, targetSchedule: g.targetSchedule || [],
+  }))
+  const allBuckets = BUCKETS.concat(goalDefs)
+
+  const buckets = allBuckets.map((b) => {
+    // a goal only counts from its start month (nothing before it is owed/missed),
+    // and can be pre-funded a few months past its start / the current month
+    // (goalMonths falls back to the default start when a goal has no startMonth)
+    const months = goalMonths(b.startMonth)
+    // target changes over time: custom goals carry their own schedule; built-ins
+    // read overrides from the carrier doc. Each month uses its effective target.
+    const schedule = b.custom ? (b.targetSchedule || []) : overrideScheduleFor(b.id)
+    const curTarget = targetAt(b.target, schedule, CURRENT)
     // monthly target tracking is deposits-only — a withdrawal must not mark a month unmet
-    const byMonth = MONTHS.map((mk) => {
+    const byMonth = months.map((mk) => {
+      const tgt = targetAt(b.target, schedule, mk)
       const amt = contribs.filter((c) => c.bucket === b.id && c.month === mk && !isWithdrawal(c)).reduce((a, c) => a + c.amount, 0)
       let st
-      if (mk === CURRENT) st = amt >= b.target ? 'met' : (amt > 0 ? 'partial' : 'due')
-      else st = amt >= b.target ? 'met' : (amt > 0 ? 'partial' : 'missed')
+      if (mk > CURRENT) st = amt >= tgt ? 'met' : (amt > 0 ? 'partial' : 'future') // ahead of time
+      else if (mk === CURRENT) st = amt >= tgt ? 'met' : (amt > 0 ? 'partial' : 'due')
+      else st = amt >= tgt ? 'met' : (amt > 0 ? 'partial' : 'missed')
       const x = STATUS[st]
-      return { month: mk, label: monthLabel(mk), amount: amt, amountStr: fmt(amt), status: st, mark: x.mark, bg: x.bg, fg: x.fg, bd: x.bd }
+      return { month: mk, label: monthLabel(mk), amount: amt, amountStr: fmt(amt), target: tgt, targetStr: fmt(tgt), status: st, mark: x.mark, bg: x.bg, fg: x.fg, bd: x.bd }
     })
-    const deposited = byMonth.reduce((a, m) => a + m.amount, 0)
+    const deposited = byMonth.reduce((a, m) => a + m.amount, 0) // includes any pre-funded future months
     const withdrawn = contribs.filter((c) => c.bucket === b.id && isWithdrawal(c)).reduce((a, c) => a + c.amount, 0)
     const saved = deposited - withdrawn // balance currently held
-    const thisMonth = byMonth.find((m) => m.month === CURRENT).amount
-    const debtPast = byMonth.filter((m) => m.month !== CURRENT).reduce((a, m) => a + Math.max(0, b.target - m.amount), 0)
-    // the current month counts too — an unfunded month is already owed
-    const debt = debtPast + Math.max(0, b.target - thisMonth)
-    const pct = Math.min(100, Math.round(thisMonth / b.target * 100))
+    const curCell = byMonth.find((m) => m.month === CURRENT)
+    const thisMonth = curCell ? curCell.amount : 0
+    // owed = start month through the current month; future & pre-start never owed.
+    // each month is owed its own effective target (past targets are preserved)
+    const owed = byMonth.filter((m) => m.month <= CURRENT)
+    const debt = owed.reduce((a, m) => a + Math.max(0, m.target - m.amount), 0)
+    const debtPast = owed.filter((m) => m.month < CURRENT).reduce((a, m) => a + Math.max(0, m.target - m.amount), 0)
+    const pct = curTarget ? Math.min(100, Math.round(thisMonth / curTarget * 100)) : 0
     // most recent account this goal was saved into, else the bucket default
     const lastWithAccount = contribs.filter((c) => c.bucket === b.id && c.account).slice(-1)[0]
     const account = (lastWithAccount && lastWithAccount.account) || b.account || ''
     return {
-      ...b, account, byMonth,
+      ...b, target: curTarget, account, byMonth, schedule, hasTargetChanges: (schedule || []).length > 0,
       deposited, depositedStr: fmt(deposited), withdrawn, withdrawnStr: fmt(withdrawn), hasWithdrawn: withdrawn > 0,
       saved, savedStr: fmt(saved), balance: saved, balanceStr: fmt(saved),
       debt, debtStr: fmt(debt), hasDebt: debt > 0, debtPast, debtPastStr: fmt(debtPast),
-      thisMonth, thisMonthStr: fmt(thisMonth), targetStr: fmt(b.target), pct, pctStr: pct + '%',
+      thisMonth, thisMonthStr: fmt(thisMonth), targetStr: fmt(curTarget), pct, pctStr: pct + '%',
       softBg: rgba(b.color, 0.14),
     }
   })
