@@ -14,9 +14,19 @@ const TITLES = {
   goal: (e) => (e ? 'Edit goal' : 'New savings goal'),
   goalTarget: () => 'Adjust monthly target',
   account: (e) => (e ? 'Edit account' : 'New account'),
+  asset: (e) => (e ? 'Edit asset' : 'New asset'),
+  assetSale: () => 'Record a sale',
   debt: (e) => (e ? 'Edit debt' : 'Add a debt'),
   debtPayment: () => 'Record a payment',
 }
+const ASSET_TYPE_OPTS = [
+  { value: 'land', name: 'Land' },
+  { value: 'house', name: 'House' },
+  { value: 'vehicle', name: 'Vehicle' },
+  { value: 'equipment', name: 'Equipment' },
+  { value: 'investment', name: 'Investment' },
+  { value: 'other', name: 'Other' },
+]
 const ICON_OPTS = [
   ['HTML', '/assets/skill-html.png'], ['CSS', '/assets/skill-css.png'], ['JS', '/assets/skill-js.png'],
   ['Node', '/assets/skill-node.png'], ['Express', '/assets/skill-express.png'], ['Mongo', '/assets/skill-mongo.png'],
@@ -115,6 +125,21 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
       const opening = parseFloat(String(f.openingBalance == null ? '' : f.openingBalance).replace(/[^0-9.-]/g, '')) || 0
       return commit({ ...f, name: f.name.trim(), type: f.type || 'spendable', openingBalance: opening })
     }
+    if (kind === 'asset') {
+      if (!String(f.name || '').trim()) e.name = 'Name is required'
+      const value = parseFloat(String(f.value == null ? '' : f.value).replace(/[^0-9.]/g, '')) || 0
+      if (value <= 0) e.value = 'Enter the current value'
+      if (Object.keys(e).length) return setErr(e)
+      const num = (v) => parseFloat(String(v == null ? '' : v).replace(/[^0-9.]/g, '')) || 0
+      return commit({ ...f, name: f.name.trim(), type: f.type || 'other', value, cost: num(f.cost), size: num(f.size), year: parseInt(String(f.year || '').replace(/[^0-9]/g, ''), 10) || 0 })
+    }
+    if (kind === 'assetSale') {
+      const amt = parseFloat(String(f.soldAmount == null ? '' : f.soldAmount).replace(/[^0-9.]/g, '')) || 0
+      if (!amt || amt <= 0) e.soldAmount = 'Enter the sale amount'
+      if (hasAccounts && !f.soldWallet) e.soldWallet = 'Choose where the money went'
+      if (Object.keys(e).length) return setErr(e)
+      return commit({ ...f, soldAmount: amt, sold: true, soldDate: f.soldDate || today() })
+    }
     if (kind === 'debt') {
       const amt = parseFloat(String(f.amount == null ? '' : f.amount).replace(/[^0-9.]/g, ''))
       if (!String(f.name || '').trim()) e.name = (f.direction === 'lent' ? 'Borrower' : 'Lender') + ' name is required'
@@ -139,7 +164,7 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
     commit({ ...f, amount: amt })
   }
 
-  const saveLabel = kind === 'goalTarget' ? 'Update target' : edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'goal' ? 'Create goal' : kind === 'account' ? 'Create account' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
+  const saveLabel = kind === 'goalTarget' ? 'Update target' : kind === 'assetSale' ? 'Record sale' : edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'goal' ? 'Create goal' : kind === 'account' ? 'Create account' : kind === 'asset' ? 'Add asset' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
   const isFinance = kind === 'income' || kind === 'expense' || kind === 'saving'
   const isOther = kind === 'expense' && f.category === 'other'
   const selGoal = goalOpts.find((o) => o.value === f.bucket)
@@ -455,6 +480,122 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
                 <button key={c} onClick={() => set('color', c)} title={c} style={{ width: 30, height: 30, borderRadius: 8, cursor: 'pointer', background: c, border: (f.color || GOAL_COLORS[0]) === c ? '3px solid var(--strong)' : '1px solid var(--border2)' }} />
               ))}
             </div>
+          </>
+        )}
+
+        {kind === 'asset' && (
+          <>
+            <label style={lbl}>Name</label>
+            <input type="text" value={f.name || ''} onChange={onInput('name')} placeholder="e.g. Plot in Kicukiro, Toyota RAV4" style={{ ...inp(err.name && 'rgba(251,113,133,0.6)'), fontSize: 15, fontWeight: 600 }} />
+            {err.name && <div style={errStyle}>{err.name}</div>}
+            <div style={{ height: 16 }} />
+            <label style={lbl}>Type</label>
+            <Pills options={ASSET_TYPE_OPTS} value={f.type || 'other'} onPick={(v) => set('type', v)} />
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Current value (FRw)</label>
+                <input type="number" value={f.value == null ? '' : f.value} onChange={onInput('value')} placeholder="0" style={{ ...inp(err.value && 'rgba(251,113,133,0.6)'), fontFamily: "'JetBrains Mono'", fontWeight: 700 }} />
+                {err.value && <div style={errStyle}>{err.value}</div>}
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Buying cost (optional)</label>
+                <input type="number" value={f.cost == null ? '' : f.cost} onChange={onInput('cost')} placeholder="0" style={{ ...inp(), fontFamily: "'JetBrains Mono'" }} />
+              </div>
+            </div>
+            {(f.type === 'land' || f.type === 'house') && (
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>Size</label>
+                  <input type="number" value={f.size == null ? '' : f.size} onChange={onInput('size')} placeholder="0" style={inp()} />
+                </div>
+                <div style={{ width: 110 }}>
+                  <label style={lbl}>Unit</label>
+                  <select value={f.sizeUnit || 'sqm'} onChange={onInput('sizeUnit')} style={{ ...inp(), cursor: 'pointer' }}>
+                    <option value="sqm">sqm</option>
+                    <option value="are">are</option>
+                    <option value="ha">ha</option>
+                    <option value="acre">acre</option>
+                  </select>
+                </div>
+              </div>
+            )}
+            {f.type === 'land' && (
+              <>
+                <label style={lbl}>UPI (parcel id)</label>
+                <input type="text" value={f.upi || ''} onChange={onInput('upi')} placeholder="e.g. 1/02/08/04/1234" style={{ ...inp(), marginBottom: 16 }} />
+              </>
+            )}
+            {f.type === 'vehicle' && (
+              <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>Plate</label>
+                  <input type="text" value={f.plate || ''} onChange={onInput('plate')} placeholder="e.g. RAD 123 A" style={inp()} />
+                </div>
+                <div style={{ width: 120 }}>
+                  <label style={lbl}>Year</label>
+                  <input type="number" value={f.year == null ? '' : f.year} onChange={onInput('year')} placeholder="2018" style={inp()} />
+                </div>
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Location (optional)</label>
+                <input type="text" value={f.location || ''} onChange={onInput('location')} placeholder="e.g. Kicukiro, Kigali" style={inp()} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={lbl}>Acquired (optional)</label>
+                <input type="date" value={f.acquiredDate || ''} onChange={onInput('acquiredDate')} style={inp()} />
+              </div>
+            </div>
+            {!edit && (
+              <>
+                <label style={lbl}>Paid from wallet (optional)</label>
+                {spendableOpts.length ? (
+                  <select value={f.wallet || ''} onChange={onInput('wallet')} style={{ ...inp(), cursor: 'pointer', marginBottom: 6 }}>
+                    <option value="">Already owned / not from a wallet</option>
+                    {spendableOpts.map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" value="" disabled placeholder="No wallets yet" style={{ ...inp(), marginBottom: 6, opacity: 0.6 }} />
+                )}
+                <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 16 }}>If you're buying it now, pick the wallet the cost came from — it'll be deducted. Leave blank for something you already owned.</div>
+              </>
+            )}
+            <label style={lbl}>Notes (optional)</label>
+            <input type="text" value={f.notes || ''} onChange={onInput('notes')} placeholder="Anything worth remembering" style={{ ...inp(), marginBottom: 20 }} />
+            <label style={lbl}>Colour</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {GOAL_COLORS.map((c) => (
+                <button key={c} onClick={() => set('color', c)} title={c} style={{ width: 30, height: 30, borderRadius: 8, cursor: 'pointer', background: c, border: (f.color || GOAL_COLORS[0]) === c ? '3px solid var(--strong)' : '1px solid var(--border2)' }} />
+              ))}
+            </div>
+          </>
+        )}
+
+        {kind === 'assetSale' && (
+          <>
+            <div style={{ padding: '14px 16px', borderRadius: 12, background: 'var(--fill)', border: '1px solid var(--border)', marginBottom: 18 }}>
+              <div style={{ fontSize: 13, color: 'var(--muted2)' }}>Selling</div>
+              <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--strong)', marginTop: 2 }}>{f._assetName || 'Asset'}</div>
+              {f._assetValue != null && <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginTop: 4 }}>Current value {fmt(Number(f._assetValue) || 0)}</div>}
+            </div>
+            <label style={lbl}>Sale amount (FRw)</label>
+            <input type="number" value={f.soldAmount == null ? '' : f.soldAmount} onChange={onInput('soldAmount')} placeholder="0" style={{ ...inp(err.soldAmount && 'rgba(251,113,133,0.6)'), fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono'" }} />
+            {err.soldAmount && <div style={errStyle}>{err.soldAmount}</div>}
+            <div style={{ height: 16 }} />
+            <label style={lbl}>Money went into</label>
+            {spendableOpts.length ? (
+              <select value={f.soldWallet || ''} onChange={onInput('soldWallet')} style={{ ...inp(err.soldWallet && 'rgba(251,113,133,0.6)'), cursor: 'pointer' }}>
+                <option value="" disabled>Select a wallet…</option>
+                {spendableOpts.map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+              </select>
+            ) : (
+              <div style={{ fontSize: 12.5, color: 'var(--muted3)' }}>No wallets yet — add one in the Accounts tab.</div>
+            )}
+            {err.soldWallet && <div style={errStyle}>{err.soldWallet}</div>}
+            <div style={{ height: 16 }} />
+            <label style={lbl}>Date sold</label>
+            <input type="date" value={f.soldDate || today()} onChange={onInput('soldDate')} style={{ ...inp(), marginBottom: 24 }} />
           </>
         )}
 

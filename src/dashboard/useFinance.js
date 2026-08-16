@@ -21,6 +21,7 @@ export function useFinance() {
   const [budgetItems, setBudgetItems] = useState([])
   const [goals, setGoals] = useState([])
   const [accounts, setAccounts] = useState([])
+  const [assets, setAssets] = useState([])
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = budgetItems }, [budgetItems])
 
@@ -31,6 +32,7 @@ export function useFinance() {
     if (Array.isArray(s.budgetItems)) setBudgetItems(s.budgetItems)
     if (Array.isArray(s.goals)) setGoals(s.goals)
     if (Array.isArray(s.accounts)) setAccounts(s.accounts)
+    if (Array.isArray(s.assets)) setAssets(s.assets)
   }, [])
   const resync = useCallback(() => { Finance.state().then(hydrate).catch(() => {}) }, [hydrate])
 
@@ -179,5 +181,23 @@ export function useFinance() {
     catch (e) { writeError('change', e) }
   }, [writeError])
 
-  return { tx, contribs, budgetItems, goals, accounts, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal, saveAccount, removeAccount }
+  /* ------------------------------------------------ assets (confirm-first) */
+  const saveAsset = useCallback(async (rec) => {
+    try {
+      if (rec.id) {
+        await Finance.updateAsset(rec.id, rec)
+        setAssets((cur) => cur.map((a) => (a.id === rec.id ? { ...a, ...rec } : a)))
+      } else {
+        const saved = await Finance.addAsset(rec)
+        setAssets((cur) => cur.concat([docId(saved) ? saved : { ...rec, id: uid() }]))
+      }
+    } catch (e) { writeError('asset', e); throw e }
+  }, [writeError])
+
+  const removeAsset = useCallback(async (id) => {
+    try { await Finance.removeAsset(id); setAssets((cur) => cur.filter((a) => a.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
+
+  return { tx, contribs, budgetItems, goals, accounts, assets, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal, saveAccount, removeAccount, saveAsset, removeAsset }
 }

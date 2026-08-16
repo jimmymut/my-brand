@@ -65,7 +65,7 @@ export function accountResolver(accounts) {
 // still resolved for legacy/built-in data). balance = opening + income in
 // − expenses out + deposits landing here − deposits paid from here
 // − withdrawals taken from here + withdrawals returned here.
-export function deriveAccounts(accounts, tx, contribs) {
+export function deriveAccounts(accounts, tx, contribs, assets) {
   const list = accounts || []
   const resolve = accountResolver(list)
   const inflow = {}, outflow = {}
@@ -80,6 +80,11 @@ export function deriveAccounts(accounts, tx, contribs) {
     const wal = resolve(c.wallet)
     if (c.kind === 'withdrawal') { bump(outflow, pot, c.amount); bump(inflow, wal, c.amount) }
     else { bump(inflow, pot, c.amount); bump(outflow, wal, c.amount) }
+  })
+  ;(assets || []).forEach((a) => {
+    if (a.archived) return
+    if (a.wallet && a.cost) bump(outflow, resolve(a.wallet), a.cost) // paid to acquire it
+    if (a.sold && a.soldWallet && a.soldAmount) bump(inflow, resolve(a.soldWallet), a.soldAmount) // sale proceeds
   })
   const views = list.filter((a) => !a.archived).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((a) => {
     const inf = inflow[a.id] || 0
@@ -103,7 +108,65 @@ export function deriveAccounts(accounts, tx, contribs) {
   return { views, spendableTotal, savingsTotal, netWorth: spendableTotal + savingsTotal, unassigned }
 }
 
-export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { range, selMonth, txFilter }) {
+export const ASSET_TYPES = {
+  land: { label: 'Land', color: '#34D399' },
+  house: { label: 'House', color: '#38BDF8' },
+  vehicle: { label: 'Vehicle', color: '#F59E0B' },
+  equipment: { label: 'Equipment', color: '#A78BFA' },
+  investment: { label: 'Investment', color: '#F472B6' },
+  other: { label: 'Other', color: '#94A3B8' },
+}
+
+// Property/assets: totals, gain vs cost, type-specific detail chips, per-type split.
+export function deriveAssets(assets, accounts) {
+  const resolve = accountResolver(accounts || [])
+  const nameOf = (ref) => { const a = resolve(ref); return a ? a.name : (ref || '') }
+  const list = (assets || []).filter((a) => !a.archived)
+  const view = (a) => {
+    const meta = ASSET_TYPES[a.type] || ASSET_TYPES.other
+    const value = a.value || 0
+    const cost = a.cost || 0
+    const gain = value - cost
+    const details = []
+    if (a.type === 'land') {
+      if (a.size) details.push(`${a.size} ${a.sizeUnit || 'sqm'}`)
+      if (a.upi) details.push(`UPI ${a.upi}`)
+    }
+    if (a.type === 'house' && a.size) details.push(`${a.size} ${a.sizeUnit || 'sqm'}`)
+    if (a.type === 'vehicle') {
+      if (a.plate) details.push(a.plate)
+      if (a.year) details.push(String(a.year))
+    }
+    if (a.location) details.push(a.location)
+    return {
+      id: a.id, name: a.name || meta.label, type: a.type || 'other', typeLabel: meta.label,
+      color: a.color || meta.color, value, valueStr: fmt(value), cost, costStr: fmt(cost),
+      gain, gainStr: (gain >= 0 ? '+ ' : '− ') + fmt(Math.abs(gain)), gainColor: gain >= 0 ? '#1FA779' : '#E5577A', hasCost: cost > 0,
+      acquiredDate: a.acquiredDate || '', location: a.location || '', details, notes: a.notes || '',
+      sold: !!a.sold, soldAmount: a.soldAmount || 0, soldAmountStr: fmt(a.soldAmount || 0), soldWalletName: nameOf(a.soldWallet), soldDate: a.soldDate || '',
+      walletName: nameOf(a.wallet), order: a.order || 0, raw: a,
+    }
+  }
+  const active = list.filter((a) => !a.sold).map(view).sort((x, y) => x.order - y.order)
+  const sold = list.filter((a) => a.sold).map(view)
+  const totalValue = active.reduce((s, a) => s + a.value, 0)
+  const totalCost = active.reduce((s, a) => s + a.cost, 0)
+  const gain = totalValue - totalCost
+  const byType = []
+  active.forEach((a) => {
+    let g = byType.find((x) => x.type === a.type)
+    if (!g) { g = { type: a.type, label: a.typeLabel, color: a.color, value: 0, count: 0 }; byType.push(g) }
+    g.value += a.value; g.count += 1
+  })
+  byType.forEach((g) => { g.valueStr = fmt(g.value) })
+  return {
+    active, sold, count: active.length, byType,
+    totalValue, totalValueStr: fmt(totalValue), totalCost, totalCostStr: fmt(totalCost),
+    gain, gainStr: (gain >= 0 ? '+ ' : '− ') + fmt(Math.abs(gain)), gainColor: gain >= 0 ? '#1FA779' : '#E5577A', hasGain: totalCost > 0,
+  }
+}
+
+export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, assets }, { range, selMonth, txFilter }) {
   const inScope = (d) => {
     if (range === 'all') return true
     if (range === 'year') return d.slice(0, 4) === YEAR
@@ -261,7 +324,8 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { 
   const filtered = feed.filter((t) => (txFilter === 'all' ? true : t.kind === txFilter))
   const net = periodIncome - periodExpense
 
-  const accountsView = deriveAccounts(accounts, tx, contribs)
+  const accountsView = deriveAccounts(accounts, tx, contribs, assets)
+  const assetsView = deriveAssets(assets, accounts)
 
   const periodLabel = range === 'all' ? 'All time' : (range === 'year' ? ('Year ' + YEAR) : monthFull(selMonth))
   const periodShort = range === 'all' ? 'all time' : (range === 'year' ? YEAR : monthLabel(selMonth))
@@ -274,6 +338,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { 
     reminders, reminderCount, hasReminder, reminderSummary, bellReminders, bellSummary,
     recent, filtered, net, periodLabel, periodShort,
     accounts: accountsView.views, accountsInfo: accountsView,
+    assetsInfo: assetsView,
     hasDebt: totalDebt > 0,
   }
 }
