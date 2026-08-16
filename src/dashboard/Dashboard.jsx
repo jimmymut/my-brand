@@ -92,7 +92,7 @@ export default function Dashboard() {
   /* ----------------------------------------------------------- modal open */
   const openModal = (kind, item, preset) => {
     let initial
-    const firstWallet = (fin.accounts.find((a) => !a.archived && a.type !== 'savings') || {}).name || ''
+    const firstWallet = (fin.accounts.find((a) => !a.archived && a.type !== 'savings') || {}).id || ''
     if (item) initial = { ...item, _id: item.id }
     else if (kind === 'income') initial = { amount: '', desc: '', date: today(), account: firstWallet }
     else if (kind === 'expense') initial = { amount: '', category: 'rent', desc: '', date: today(), account: firstWallet }
@@ -100,7 +100,9 @@ export default function Dashboard() {
       const pre = preset || {}
       const bucketId = pre.bucket || (derived.buckets[0] && derived.buckets[0].id) || 'ejoheza'
       const bk = derived.buckets.find((b) => b.id === bucketId) // built-in OR custom goal
-      initial = { amount: '', bucket: bucketId, month: recordMonth, date: today(), kind: 'deposit', account: (bk && bk.account) || '', wallet: firstWallet, ...pre }
+      const heldName = (bk && bk.account) || ''
+      const heldAcc = fin.accounts.find((a) => a.name === heldName) // link the pot by id when it's a managed account
+      initial = { amount: '', bucket: bucketId, month: recordMonth, date: today(), kind: 'deposit', account: heldAcc ? heldAcc.id : heldName, wallet: firstWallet, ...pre }
     }
     else if (kind === 'account') initial = { name: '', type: 'spendable', color: GOAL_COLORS[0], openingBalance: '' }
     else if (kind === 'post') initial = { title: '', excerpt: '', tag: 'Frontend', customTopic: '', image: '' }
@@ -363,7 +365,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} bucketOptions={derived.buckets.map((b) => ({ value: b.id, name: b.short || b.name, account: b.account, startMonth: b.startMonth }))} accountOptions={fin.accounts.filter((a) => !a.archived).map((a) => ({ value: a.name, name: a.name, type: a.type, color: a.color }))} monthDeposits={savingMonthDeposits} onRemoveContrib={fin.removeContrib} />}
+      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} bucketOptions={derived.buckets.map((b) => ({ value: b.id, name: b.short || b.name, account: b.account, startMonth: b.startMonth }))} accountOptions={fin.accounts.filter((a) => !a.archived).map((a) => ({ value: a.id, name: a.name, type: a.type, color: a.color }))} monthDeposits={savingMonthDeposits} onRemoveContrib={fin.removeContrib} />}
     </div>
   )
 }

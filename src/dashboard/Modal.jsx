@@ -148,6 +148,14 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
   // wallet a saving is paid from / returned to
   const hasAccounts = accountOptions.length > 0
   const spendableOpts = accountOptions.filter((a) => a.type !== 'savings')
+  const savingsOpts = accountOptions.filter((a) => a.type === 'savings')
+  // keep a currently-set value selectable even if it isn't in the filtered list
+  // (a legacy name, or a pot typed as spendable); resolve its label when managed
+  const withCurrent = (opts, val) => {
+    if (!val || opts.some((o) => o.value === val)) return opts
+    const known = accountOptions.find((a) => a.value === val)
+    return [known || { value: val, name: val }].concat(opts)
+  }
   // partial-saving progress for the chosen month (top-up toward the monthly target)
   const isDeposit = kind === 'saving' && (f.kind || 'deposit') === 'deposit'
   // only trust the passed month context while the goal & month still match the tapped cell
@@ -227,12 +235,22 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
                   <Pills options={goalMonthOpts.map((m) => ({ value: m, name: monthFull(m) }))} value={f.month} onPick={(v) => set('month', v)} />
                 </div>
                 <label style={lbl}>Account / where it's held</label>
-                <input type="text" value={f.account || ''} onChange={onInput('account')} placeholder="e.g. Ejo Heza, BK" style={{ ...inp(), marginBottom: 16 }} />
+                {savingsOpts.length || f.account ? (
+                  <select value={f.account || ''} onChange={onInput('account')} style={{ ...inp(), cursor: 'pointer', marginBottom: 16 }}>
+                    <option value="" disabled>Select a savings account…</option>
+                    {withCurrent(savingsOpts, f.account).map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" value={f.account || ''} onChange={onInput('account')} placeholder="e.g. Ejo Heza, BK" style={{ ...inp(), marginBottom: 16 }} />
+                )}
                 <label style={lbl}>{f.kind === 'withdrawal' ? 'Returned to wallet' : 'Paid from wallet'}</label>
                 {spendableOpts.length ? (
                   <>
-                    <Pills options={spendableOpts.map((a) => ({ value: a.value, name: a.name }))} value={f.wallet} onPick={(v) => set('wallet', v)} />
-                    {err.wallet && <div style={{ ...errStyle, marginTop: -8, marginBottom: 12 }}>{err.wallet}</div>}
+                    <select value={f.wallet || ''} onChange={onInput('wallet')} style={{ ...inp(err.wallet && 'rgba(251,113,133,0.6)'), cursor: 'pointer', marginBottom: err.wallet ? 6 : 16 }}>
+                      <option value="" disabled>Select a wallet…</option>
+                      {withCurrent(spendableOpts, f.wallet).map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                    </select>
+                    {err.wallet && <div style={{ ...errStyle, marginBottom: 12 }}>{err.wallet}</div>}
                   </>
                 ) : (
                   <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginBottom: 16 }}>No spendable accounts yet — add one in the Accounts tab to track which wallet this moves through.</div>
@@ -245,8 +263,12 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
                 <label style={lbl}>{kind === 'income' ? 'Received into' : 'Paid from'}</label>
                 {hasAccounts ? (
                   <>
-                    <Pills options={accountOptions.map((a) => ({ value: a.value, name: a.name }))} value={f.account} onPick={(v) => set('account', v)} />
-                    {err.account && <div style={{ ...errStyle, marginTop: -8, marginBottom: 12 }}>{err.account}</div>}
+                    <select value={f.account || ''} onChange={onInput('account')} style={{ ...inp(err.account && 'rgba(251,113,133,0.6)'), cursor: 'pointer' }}>
+                      <option value="" disabled>Select an account…</option>
+                      {withCurrent(accountOptions, f.account).map((a) => <option key={a.value} value={a.value}>{a.name}{a.type === 'savings' ? ' · savings' : ''}</option>)}
+                    </select>
+                    {err.account && <div style={errStyle}>{err.account}</div>}
+                    <div style={{ height: 16 }} />
                   </>
                 ) : (
                   <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginBottom: 16 }}>No accounts yet — add your wallets in the Accounts tab to track balances.</div>

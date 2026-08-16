@@ -53,37 +53,52 @@ export function deriveBudget(budgetItems, tx, contribs, month) {
   return { month, items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs }
 }
 
-// Per-account (wallet/pot) balances from every flow that references them by name.
-// balance = opening + income in − expenses out
-//         + deposits landing here − deposits paid from here
-//         − withdrawals taken from here + withdrawals returned here
+// Resolve an account reference (its id, or a legacy/built-in NAME) to the account.
+export function accountResolver(accounts) {
+  const list = accounts || []
+  const byId = new Map(list.map((a) => [a.id, a]))
+  const byName = new Map(list.map((a) => [a.name, a]))
+  return (ref) => (ref && (byId.get(ref) || byName.get(ref))) || null
+}
+
+// Per-account (wallet/pot) balances. Records link to an account by id (names are
+// still resolved for legacy/built-in data). balance = opening + income in
+// − expenses out + deposits landing here − deposits paid from here
+// − withdrawals taken from here + withdrawals returned here.
 export function deriveAccounts(accounts, tx, contribs) {
-  const sum = (arr) => arr.reduce((a, x) => a + (x.amount || 0), 0)
-  const flows = (name) => {
-    const inc = sum(tx.filter((t) => t.kind === 'income' && t.account === name))
-    const exp = sum(tx.filter((t) => t.kind === 'expense' && t.account === name))
-    const depIn = sum(contribs.filter((c) => c.kind !== 'withdrawal' && c.account === name))
-    const depOut = sum(contribs.filter((c) => c.kind !== 'withdrawal' && c.wallet === name))
-    const wdOut = sum(contribs.filter((c) => c.kind === 'withdrawal' && c.account === name))
-    const wdIn = sum(contribs.filter((c) => c.kind === 'withdrawal' && c.wallet === name))
-    return { inflow: inc + depIn + wdIn, outflow: exp + depOut + wdOut }
-  }
-  const views = (accounts || []).filter((a) => !a.archived).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((a) => {
-    const f = flows(a.name)
+  const list = accounts || []
+  const resolve = accountResolver(list)
+  const inflow = {}, outflow = {}
+  const bump = (map, acc, amt) => { if (acc) map[acc.id] = (map[acc.id] || 0) + (amt || 0) }
+  ;(tx || []).forEach((t) => {
+    const acc = resolve(t.account)
+    if (t.kind === 'income') bump(inflow, acc, t.amount)
+    else if (t.kind === 'expense') bump(outflow, acc, t.amount)
+  })
+  ;(contribs || []).forEach((c) => {
+    const pot = resolve(c.account)
+    const wal = resolve(c.wallet)
+    if (c.kind === 'withdrawal') { bump(outflow, pot, c.amount); bump(inflow, wal, c.amount) }
+    else { bump(inflow, pot, c.amount); bump(outflow, wal, c.amount) }
+  })
+  const views = list.filter((a) => !a.archived).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((a) => {
+    const inf = inflow[a.id] || 0
+    const outf = outflow[a.id] || 0
     const opening = a.openingBalance || 0
-    const balance = opening + f.inflow - f.outflow
+    const balance = opening + inf - outf
     return {
       id: a.id, name: a.name, type: a.type || 'spendable', color: a.color || '#38BDF8',
-      opening, openingStr: fmt(opening), inflow: f.inflow, outflow: f.outflow,
-      inflowStr: fmt(f.inflow), outflowStr: fmt(f.outflow),
+      opening, openingStr: fmt(opening), inflow: inf, outflow: outf,
+      inflowStr: fmt(inf), outflowStr: fmt(outf),
       balance, balanceStr: fmt(balance), negative: balance < 0,
     }
   })
   const spendableTotal = views.filter((v) => v.type === 'spendable').reduce((a, v) => a + v.balance, 0)
   const savingsTotal = views.filter((v) => v.type === 'savings').reduce((a, v) => a + v.balance, 0)
-  // income/expense not yet assigned to any account (legacy or skipped)
-  const unInc = sum(tx.filter((t) => t.kind === 'income' && !t.account))
-  const unExp = sum(tx.filter((t) => t.kind === 'expense' && !t.account))
+  // income/expense whose account reference resolves to nothing (legacy/unset)
+  const sum = (arr) => arr.reduce((a, x) => a + (x.amount || 0), 0)
+  const unInc = sum((tx || []).filter((t) => t.kind === 'income' && !resolve(t.account)))
+  const unExp = sum((tx || []).filter((t) => t.kind === 'expense' && !resolve(t.account)))
   const unassigned = { income: unInc, expense: unExp, net: unInc - unExp, has: unInc > 0 || unExp > 0 }
   return { views, spendableTotal, savingsTotal, netWorth: spendableTotal + savingsTotal, unassigned }
 }
@@ -95,6 +110,9 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { 
     return d.slice(0, 7) === selMonth
   }
   const scopeTx = tx.filter((t) => inScope(t.date))
+  // records link to accounts by id; resolve id-or-legacy-name to a display name
+  const resolveAcct = accountResolver(accounts)
+  const acctName = (ref) => { const a = resolveAcct(ref); return a ? a.name : (ref || '') }
   const isWithdrawal = (c) => c.kind === 'withdrawal'
   const signed = (c) => (isWithdrawal(c) ? -c.amount : c.amount) // net effect on money set aside
   const totalIncome = tx.filter((t) => t.kind === 'income').reduce((a, t) => a + t.amount, 0)
@@ -166,7 +184,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { 
     const pct = curTarget ? Math.min(100, Math.round(thisMonth / curTarget * 100)) : 0
     // most recent account this goal was saved into, else the bucket default
     const lastWithAccount = contribs.filter((c) => c.bucket === b.id && c.account).slice(-1)[0]
-    const account = (lastWithAccount && lastWithAccount.account) || b.account || ''
+    const account = acctName((lastWithAccount && lastWithAccount.account) || b.account || '')
     return {
       ...b, target: curTarget, account, byMonth, schedule, hasTargetChanges: (schedule || []).length > 0,
       deposited, depositedStr: fmt(deposited), withdrawn, withdrawnStr: fmt(withdrawn), hasWithdrawn: withdrawn > 0,
@@ -215,7 +233,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { 
       title: t.desc || (cat ? cat.name : '') || (isInc ? 'Income' : 'Expense'),
       catName: isInc ? 'Income' : (cat ? cat.name : 'Expense'), catColor: color, chipBg: rgba(color, 0.16),
       initial: isInc ? '↑' : '↓', amountStr: (isInc ? '+ ' : '− ') + fmt(t.amount), amountColor: isInc ? '#1FA779' : '#E5577A',
-      account: t.account || '', accountLabel: t.account ? ((isInc ? 'to ' : 'from ') + t.account) : '',
+      account: t.account || '', accountLabel: t.account ? ((isInc ? 'to ' : 'from ') + acctName(t.account)) : '',
       dateStr: dateLabel(t.date), raw: t,
     }
   }
@@ -233,7 +251,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts }, { 
       title: (isDep ? 'Saved to ' : 'Withdrew from ') + name,
       catName: isDep ? 'Saving' : 'Withdrawal', catColor: color, chipBg: rgba(color, 0.16),
       initial: isDep ? '↓' : '↑', amountStr: (isDep ? '− ' : '+ ') + fmt(c.amount), amountColor: isDep ? '#1E9BD7' : '#1FA779',
-      account: c.wallet || '', accountLabel: c.wallet ? ((isDep ? 'from ' : 'to ') + c.wallet) : '',
+      account: c.wallet || '', accountLabel: c.wallet ? ((isDep ? 'from ' : 'to ') + acctName(c.wallet)) : '',
       dateStr: dateLabel(c.date), raw: c,
     }
   }
