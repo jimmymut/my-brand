@@ -190,7 +190,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
   const totalIncome = tx.filter((t) => t.kind === 'income').reduce((a, t) => a + t.amount, 0)
   const totalExpense = tx.filter((t) => t.kind === 'expense').reduce((a, t) => a + t.amount, 0)
   const totalSaved = contribs.reduce((a, c) => a + signed(c), 0) // net (deposits − withdrawals)
-  const balance = totalIncome - totalExpense - totalSaved
+  const trackedBalance = totalIncome - totalExpense - totalSaved
   const periodIncome = scopeTx.filter((t) => t.kind === 'income').reduce((a, t) => a + t.amount, 0)
   const periodExpense = scopeTx.filter((t) => t.kind === 'expense').reduce((a, t) => a + t.amount, 0)
   const savedInScope = contribs.filter((c) => inScope(c.date)).reduce((a, c) => a + signed(c), 0)
@@ -363,6 +363,11 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
 
   const accountsView = deriveAccounts(accounts, tx, contribs, assets, debts)
   const assetsView = deriveAssets(assets, accounts)
+  // Once wallets exist, the "available balance" is the real spendable cash across
+  // them (so borrowing, openings, asset buys… all show). Otherwise fall back to
+  // the tracked income − expense − saved figure.
+  const usesAccounts = accountsView.views.length > 0
+  const balance = usesAccounts ? accountsView.spendableTotal : trackedBalance
 
   const periodLabel = range === 'all' ? 'All time' : (range === 'year' ? ('Year ' + YEAR) : monthFull(selMonth))
   const periodShort = range === 'all' ? 'all time' : (range === 'year' ? YEAR : monthLabel(selMonth))
@@ -374,7 +379,7 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
     items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs,
     reminders, reminderCount, hasReminder, reminderSummary, bellReminders, bellSummary,
     recent, filtered, net, periodLabel, periodShort,
-    accounts: accountsView.views, accountsInfo: accountsView,
+    accounts: accountsView.views, accountsInfo: accountsView, usesAccounts,
     assetsInfo: assetsView,
     hasDebt: totalDebt > 0,
   }
