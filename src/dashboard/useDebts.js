@@ -42,11 +42,11 @@ export function useDebts() {
 
   const addPayment = useCallback(async (debtId, payment) => {
     try {
-      const updated = await Finance.addDebtPayment(debtId, { amount: payment.amount, date: payment.date })
+      const updated = await Finance.addDebtPayment(debtId, { amount: payment.amount, date: payment.date, account: payment.account || '' })
       if (updated && Array.isArray(updated.payments)) {
         setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: updated.payments } : d)))
       } else {
-        setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: (d.payments || []).concat([{ id: uid(), amount: payment.amount, date: payment.date }]) } : d)))
+        setDebts((cur) => cur.map((d) => (d.id === debtId ? { ...d, payments: (d.payments || []).concat([{ id: uid(), amount: payment.amount, date: payment.date, account: payment.account || '' }]) } : d)))
       }
     } catch (e) { writeError('payment', e); throw e }
   }, [writeError])

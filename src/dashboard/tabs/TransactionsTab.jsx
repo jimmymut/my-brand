@@ -30,6 +30,7 @@ export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDe
           <button onClick={() => reset(setTxFilter)('income')} style={filterBtn(txFilter === 'income')}>Income</button>
           <button onClick={() => reset(setTxFilter)('expense')} style={filterBtn(txFilter === 'expense')}>Expenses</button>
           <button onClick={() => reset(setTxFilter)('saving')} style={filterBtn(txFilter === 'saving')}>Saved</button>
+          <button onClick={() => reset(setTxFilter)('debt')} style={filterBtn(txFilter === 'debt')}>Debt</button>
           <select value={txCat} onChange={(e) => reset(setTxCat)(e.target.value)} style={{ padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border2)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
             <option value="all">All categories</option>
             <option value="rent">Rent</option>
@@ -59,8 +60,14 @@ export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDe
             <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>{t.dateStr}</div>
             <div style={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: t.amountColor }}>{t.amountStr}</div>
             <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-              <Hover onClick={() => onEdit(t)} title="Edit" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
-              <AsyncButton onClick={() => onDelete(t)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
+              {t.readOnly ? (
+                <span title="Managed in the Debt tab" style={{ fontSize: 11, color: 'var(--muted4)', fontWeight: 600 }}>Debt →</span>
+              ) : (
+                <>
+                  <Hover onClick={() => onEdit(t)} title="Edit" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
+                  <AsyncButton onClick={() => onDelete(t)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
+                </>
+              )}
             </div>
           </div>
         ))}

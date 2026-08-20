@@ -62,8 +62,8 @@ export default function Dashboard() {
   useEffect(() => { refetchContent() }, [])
 
   const derived = useMemo(
-    () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems, goals: fin.goals, accounts: fin.accounts, assets: fin.assets }, { range, selMonth, txFilter }),
-    [fin.tx, fin.contribs, fin.budgetItems, fin.goals, fin.accounts, fin.assets, range, selMonth, txFilter]
+    () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems, goals: fin.goals, accounts: fin.accounts, assets: fin.assets, debts: debtStore.debts }, { range, selMonth, txFilter }),
+    [fin.tx, fin.contribs, fin.budgetItems, fin.goals, fin.accounts, fin.assets, debtStore.debts, range, selMonth, txFilter]
   )
 
   // the Budget tab plans a month of its own (incl. future months) — derived
@@ -113,8 +113,8 @@ export default function Dashboard() {
     else if (kind === 'budgetItem') initial = { name: '', amount: '', priority: 'low', month: budgetMonth }
     else if (kind === 'goal') initial = { name: '', target: '', account: '', color: GOAL_COLORS[0], startMonth: CURRENT }
     else if (kind === 'goalTarget') initial = { target: '', month: CURRENT, ...(preset || {}) }
-    else if (kind === 'debt') initial = { direction: 'borrowed', name: '', amount: '', date: today(), due: '', desc: '' }
-    else if (kind === 'debtPayment') initial = { amount: '', date: today(), ...(preset || {}) }
+    else if (kind === 'debt') initial = { direction: 'borrowed', name: '', amount: '', date: today(), due: '', desc: '', account: firstWallet }
+    else if (kind === 'debtPayment') initial = { amount: '', date: today(), account: firstWallet, ...(preset || {}) }
     else initial = { title: '', desc: '', start: '', end: '', link: '' }
 
     if (kind === 'post' && item) {
@@ -160,7 +160,7 @@ export default function Dashboard() {
     })
   }
 
-  const openDebtPayment = (row) => openModal('debtPayment', null, { debtId: row.id, _party: row.party, _remainingStr: row.remainingStr })
+  const openDebtPayment = (row) => openModal('debtPayment', null, { debtId: row.id, _party: row.party, _remainingStr: row.remainingStr, _borrowed: row.borrowed })
 
   /* -------------------------------------------------------- budget month nav */
   // step the Budget tab's month within [savings start, one year ahead]
@@ -262,9 +262,12 @@ export default function Dashboard() {
         const rec = { ...base, id: (w && (w._id || w.id)) || id || uid() }
         setWork((cur) => (id ? cur.map((x) => (x.id === id ? rec : x)) : [...cur, rec]))
       } else if (k === 'debt') {
-        await debtStore.saveDebt({ id, direction: f.direction || 'borrowed', name: f.name, amount: f.amount, date: f.date, due: f.due || '', desc: f.desc || '' })
+        // account is set only on creation (kept off edits so existing debts stay unlinked)
+        const rec = { id, direction: f.direction || 'borrowed', name: f.name, amount: f.amount, date: f.date, due: f.due || '', desc: f.desc || '' }
+        if (!id) rec.account = f.account || ''
+        await debtStore.saveDebt(rec)
       } else if (k === 'debtPayment') {
-        await debtStore.addPayment(f.debtId, { amount: f.amount, date: f.date })
+        await debtStore.addPayment(f.debtId, { amount: f.amount, date: f.date, account: f.account || '' })
       }
       setModal(null)
       return true

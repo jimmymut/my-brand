@@ -625,7 +625,21 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
               </div>
             </div>
             <label style={lbl}>Note (optional)</label>
-            <input type="text" value={f.desc || ''} onChange={onInput('desc')} placeholder="What was it for?" style={{ ...inp(), marginBottom: 24 }} />
+            <input type="text" value={f.desc || ''} onChange={onInput('desc')} placeholder="What was it for?" style={{ ...inp(), marginBottom: edit ? 24 : 16 }} />
+            {!edit && (
+              <>
+                <label style={lbl}>{debtDir === 'lent' ? 'Paid from wallet' : 'Received into wallet'}</label>
+                {spendableOpts.length ? (
+                  <select value={f.account || ''} onChange={onInput('account')} style={{ ...inp(), cursor: 'pointer', marginBottom: 6 }}>
+                    <option value="">Not linked to a wallet</option>
+                    {spendableOpts.map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                  </select>
+                ) : (
+                  <input type="text" value="" disabled placeholder="No wallets yet" style={{ ...inp(), marginBottom: 6, opacity: 0.6 }} />
+                )}
+                <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 24 }}>{debtDir === 'lent' ? 'The wallet the money left from — it will be deducted.' : 'The wallet the money landed in — it will be added.'} Leave blank to keep it off your balances.</div>
+              </>
+            )}
           </>
         )}
 
@@ -639,6 +653,19 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
             <label style={lbl}>Payment amount (FRw)</label>
             <input type="number" value={f.amount == null ? '' : f.amount} onChange={onInput('amount')} placeholder="0" style={{ ...inp(err.amount && 'rgba(251,113,133,0.6)'), fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono'" }} />
             {err.amount && <div style={errStyle}>{err.amount}</div>}
+            <div style={{ height: 16 }} />
+            <label style={lbl}>{f._borrowed === false ? 'Received into wallet' : 'Paid from wallet'}</label>
+            {spendableOpts.length ? (
+              <>
+                <select value={f.account || ''} onChange={onInput('account')} style={{ ...inp(err.account && 'rgba(251,113,133,0.6)'), cursor: 'pointer' }}>
+                  <option value="">Not linked to a wallet</option>
+                  {spendableOpts.map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                </select>
+                {err.account && <div style={errStyle}>{err.account}</div>}
+              </>
+            ) : (
+              <div style={{ fontSize: 12.5, color: 'var(--muted3)' }}>No wallets yet — add one in the Accounts tab.</div>
+            )}
             <div style={{ height: 16 }} />
             <label style={lbl}>Date paid</label>
             <input type="date" value={f.date || today()} onChange={onInput('date')} style={{ ...inp(), marginBottom: 24 }} />

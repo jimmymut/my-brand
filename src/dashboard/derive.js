@@ -65,7 +65,7 @@ export function accountResolver(accounts) {
 // still resolved for legacy/built-in data). balance = opening + income in
 // − expenses out + deposits landing here − deposits paid from here
 // − withdrawals taken from here + withdrawals returned here.
-export function deriveAccounts(accounts, tx, contribs, assets) {
+export function deriveAccounts(accounts, tx, contribs, assets, debts) {
   const list = accounts || []
   const resolve = accountResolver(list)
   const inflow = {}, outflow = {}
@@ -85,6 +85,15 @@ export function deriveAccounts(accounts, tx, contribs, assets) {
     if (a.archived) return
     if (a.wallet && a.cost) bump(outflow, resolve(a.wallet), a.cost) // paid to acquire it
     if (a.sold && a.soldWallet && a.soldAmount) bump(inflow, resolve(a.soldWallet), a.soldAmount) // sale proceeds
+  })
+  ;(debts || []).forEach((d) => {
+    const borrowed = d.direction !== 'lent'
+    // origination: borrowed money lands in a wallet; lent money leaves one (only if linked)
+    if (d.account) bump(borrowed ? inflow : outflow, resolve(d.account), d.amount)
+    // repayments: on borrowed I pay out; on lent I receive (only linked payments)
+    ;(d.payments || []).forEach((p) => {
+      if (p.account) bump(borrowed ? outflow : inflow, resolve(p.account), p.amount)
+    })
   })
   const views = list.filter((a) => !a.archived).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((a) => {
     const inf = inflow[a.id] || 0
@@ -166,7 +175,7 @@ export function deriveAssets(assets, accounts) {
   }
 }
 
-export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, assets }, { range, selMonth, txFilter }) {
+export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, assets, debts }, { range, selMonth, txFilter }) {
   const inScope = (d) => {
     if (range === 'all') return true
     if (range === 'year') return d.slice(0, 4) === YEAR
@@ -318,13 +327,41 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
       dateStr: dateLabel(c.date), raw: c,
     }
   }
+  // Debt movements as read-only ledger rows (only the account-linked ones affect
+  // balances, so only those appear). Borrowed cash comes in / repayments go out;
+  // lent cash goes out / repayments come in.
+  const debtRows = []
+  ;(debts || []).forEach((d) => {
+    const borrowed = d.direction !== 'lent'
+    if (d.account && inScope(d.date)) {
+      debtRows.push({
+        id: 'debt-' + d.id, kind: 'debt', readOnly: true, isIncome: borrowed, date: d.date,
+        title: (borrowed ? 'Borrowed from ' : 'Lent to ') + (d.name || 'someone'),
+        catName: borrowed ? 'Borrowed' : 'Lent', catColor: '#F59E0B', chipBg: rgba('#F59E0B', 0.16),
+        initial: borrowed ? '↑' : '↓', amountStr: (borrowed ? '+ ' : '− ') + fmt(d.amount), amountColor: borrowed ? '#1FA779' : '#E5577A',
+        account: d.account, accountLabel: (borrowed ? 'into ' : 'from ') + acctName(d.account),
+        dateStr: dateLabel(d.date), raw: d,
+      })
+    }
+    ;(d.payments || []).forEach((p, i) => {
+      if (!p.account || !inScope(p.date)) return
+      debtRows.push({
+        id: 'pay-' + d.id + '-' + (p.id || i), kind: 'debt', readOnly: true, isIncome: !borrowed, date: p.date,
+        title: (borrowed ? 'Repaid ' : 'Repayment from ') + (d.name || 'someone'),
+        catName: 'Debt payment', catColor: '#F59E0B', chipBg: rgba('#F59E0B', 0.16),
+        initial: borrowed ? '↓' : '↑', amountStr: (borrowed ? '− ' : '+ ') + fmt(p.amount), amountColor: borrowed ? '#E5577A' : '#1FA779',
+        account: p.account, accountLabel: (borrowed ? 'from ' : 'into ') + acctName(p.account),
+        dateStr: dateLabel(p.date), raw: d,
+      })
+    })
+  })
   const scopeContribs = contribs.filter((c) => inScope(c.date))
-  const feed = scopeTx.map(disp).concat(scopeContribs.map(savingDisp)).sort((a, b) => (a.date < b.date ? 1 : -1))
+  const feed = scopeTx.map(disp).concat(scopeContribs.map(savingDisp)).concat(debtRows).sort((a, b) => (a.date < b.date ? 1 : -1))
   const recent = feed.slice(0, 6)
   const filtered = feed.filter((t) => (txFilter === 'all' ? true : t.kind === txFilter))
   const net = periodIncome - periodExpense
 
-  const accountsView = deriveAccounts(accounts, tx, contribs, assets)
+  const accountsView = deriveAccounts(accounts, tx, contribs, assets, debts)
   const assetsView = deriveAssets(assets, accounts)
 
   const periodLabel = range === 'all' ? 'All time' : (range === 'year' ? ('Year ' + YEAR) : monthFull(selMonth))
