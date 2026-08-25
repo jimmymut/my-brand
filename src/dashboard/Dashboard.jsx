@@ -361,7 +361,7 @@ export default function Dashboard() {
           onReminderClick={onReminderClick} debt={debtD}
         />
 
-        <div style={{ padding: '28px 32px 60px' }}>
+        <div className="dash-content" style={{ padding: '28px 32px 60px' }}>
           {tab === 'overview' && <OverviewTab d={derived} setTab={setTab} onSavingCell={openSavingCell} />}
           {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(t) => openModal(t.kind, t.raw)} onDelete={(t) => (t.kind === 'saving' ? fin.removeContrib(t.raw.id) : fin.removeTx(t.raw.id))} />}
           {tab === 'accounts' && <AccountsTab d={derived} onAddAccount={() => openModal('account')} onEditAccount={(a) => openModal('account', fin.accounts.find((x) => x.id === a.id) || a)} onDeleteAccount={fin.removeAccount} />}

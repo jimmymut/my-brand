@@ -37,3 +37,8 @@ input[type=date], input[type=number], input[type=month] { color-scheme: light da
   .dash-hamburger { display: flex !important; }
   .dash-backdrop[data-open="true"] { display: block !important; }
 }
+@media (max-width: 640px) {
+  .dash-content { padding: 18px 14px 48px !important; }
+  .dash-topbar { padding: 16px 14px !important; }
+  .dash-topbar h1 { font-size: 20px !important; }
+}

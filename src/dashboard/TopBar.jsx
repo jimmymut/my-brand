@@ -28,7 +28,7 @@ export default function TopBar({
   const anyMenu = bellOpen || exportOpen
 
   return (
-    <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, padding: '22px 32px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 30, flexWrap: 'wrap' }}>
+    <header className="dash-topbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 18, padding: '22px 32px', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 30, flexWrap: 'wrap' }}>
       {anyMenu && <div onClick={() => { setBellOpen(false); setExportOpen(false) }} className="noprint" style={{ position: 'fixed', inset: 0, zIndex: 50 }} />}
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <button onClick={sidebarToggle} className="dash-hamburger noprint" style={{ width: 40, height: 40, flexShrink: 0, alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border2)', borderRadius: 11, background: 'var(--fill)', color: 'var(--text)', cursor: 'pointer' }}>

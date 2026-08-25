@@ -4,13 +4,28 @@ import AsyncButton from '../../components/AsyncButton'
 import Pager from '../../components/Pager'
 import { fmt } from '../../lib/format'
 import { makePager, pageSlice } from '../../lib/pager'
+import { useMediaQuery } from '../../lib/useMediaQuery'
 
 const COLS = '46px 1.7fr 1fr 1.1fr 130px 86px'
 const filterBtn = (active) => ({ padding: '9px 16px', borderRadius: 10, border: '1px solid var(--border2)', cursor: 'pointer', fontSize: 13.5, fontWeight: 600, background: active ? 'rgba(52,211,153,0.14)' : 'transparent', color: active ? '#1FA779' : 'var(--muted)' })
 
+const catChip = (t) => ({ fontSize: 12, fontWeight: 600, padding: '3px 9px', borderRadius: 7, background: t.chipBg, color: t.catColor })
+
+// action buttons — shared by table + card layouts
+function RowActions({ t, onEdit, onDelete }) {
+  if (t.readOnly) return <span title="Managed in the Debt tab" style={{ fontSize: 11, color: 'var(--muted4)', fontWeight: 600 }}>Debt →</span>
+  return (
+    <>
+      <Hover onClick={() => onEdit(t)} title="Edit" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
+      <AsyncButton onClick={() => onDelete(t)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
+    </>
+  )
+}
+
 export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDelete }) {
   const [txCat, setTxCat] = useState('all')
   const [page, setPage] = useState(1)
+  const isMobile = useMediaQuery('(max-width: 640px)')
 
   // d.filtered already reflects the All/Income/Expense filter; layer the category filter on top.
   const full = useMemo(
@@ -43,35 +58,59 @@ export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDe
         <div style={{ fontSize: 13.5, color: 'var(--muted2)' }}>{full.length} in {d.periodLabel} · net {(d.net >= 0 ? '+ ' : '− ') + fmt(Math.abs(d.net))}</div>
       </div>
 
-      <div style={{ borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: 14, padding: '14px 22px', borderBottom: '1px solid var(--border)', fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--muted3)', fontWeight: 700 }}>
-          <div /><div>Description</div><div>Category</div><div>Date</div><div style={{ textAlign: 'right' }}>Amount</div><div />
-        </div>
-        {full.length === 0 ? (
-          <div style={{ padding: 48, textAlign: 'center', color: 'var(--muted3)', fontSize: 14 }}>No transactions in {d.periodLabel} — add one or widen the range.</div>
-        ) : rows.map((t) => (
-          <div key={t.id} style={{ display: 'grid', gridTemplateColumns: COLS, gap: 14, padding: '15px 22px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
-            <div style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: t.chipBg, color: t.catColor }}>{t.initial}</div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
-              <div style={{ fontSize: 11.5, color: t.accountLabel ? 'var(--muted2)' : 'var(--muted4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: t.accountLabel ? 'normal' : 'italic' }}>{t.accountLabel || 'No account'}</div>
+      {full.length === 0 ? (
+        <div style={{ padding: 48, textAlign: 'center', color: 'var(--muted3)', fontSize: 14, borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border)' }}>No transactions in {d.periodLabel} — add one or widen the range.</div>
+      ) : isMobile ? (
+        /* stacked cards — no horizontal scroll on phones */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {rows.map((t) => (
+            <div key={t.id} style={{ padding: '13px 15px', borderRadius: 14, background: 'var(--surface)', border: '1px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 34, height: 34, flexShrink: 0, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: t.chipBg, color: t.catColor }}>{t.initial}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                  <div style={{ fontSize: 11.5, color: t.accountLabel ? 'var(--muted2)' : 'var(--muted4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: t.accountLabel ? 'normal' : 'italic' }}>{t.accountLabel || 'No account'}</div>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: t.amountColor, flexShrink: 0 }}>{t.amountStr}</div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginTop: 11 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <span style={catChip(t)}>{t.catName}</span>
+                  <span style={{ fontSize: 12.5, color: 'var(--muted3)', whiteSpace: 'nowrap' }}>{t.dateStr}</span>
+                </div>
+                <div className="noprint" style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                  <RowActions t={t} onEdit={onEdit} onDelete={onDelete} />
+                </div>
+              </div>
             </div>
-            <div><span style={{ fontSize: 12.5, fontWeight: 600, padding: '4px 10px', borderRadius: 7, background: t.chipBg, color: t.catColor }}>{t.catName}</span></div>
-            <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>{t.dateStr}</div>
-            <div style={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: t.amountColor }}>{t.amountStr}</div>
-            <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-              {t.readOnly ? (
-                <span title="Managed in the Debt tab" style={{ fontSize: 11, color: 'var(--muted4)', fontWeight: 600 }}>Debt →</span>
-              ) : (
-                <>
-                  <Hover onClick={() => onEdit(t)} title="Edit" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
-                  <AsyncButton onClick={() => onDelete(t)} title="Delete" style={{ width: 30, height: 30, borderRadius: 8, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', cursor: 'pointer', fontSize: 14 }} hover={{ background: 'rgba(251,113,133,0.18)' }}>×</AsyncButton>
-                </>
-              )}
+          ))}
+        </div>
+      ) : (
+        <div style={{ borderRadius: 18, background: 'var(--surface)', border: '1px solid var(--border)', overflow: 'hidden' }}>
+          <div style={{ overflowX: 'auto' }}>
+            <div style={{ minWidth: 600 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: COLS, gap: 14, padding: '14px 22px', borderBottom: '1px solid var(--border)', fontSize: 12, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--muted3)', fontWeight: 700 }}>
+                <div /><div>Description</div><div>Category</div><div>Date</div><div style={{ textAlign: 'right' }}>Amount</div><div />
+              </div>
+              {rows.map((t) => (
+                <div key={t.id} style={{ display: 'grid', gridTemplateColumns: COLS, gap: 14, padding: '15px 22px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700, background: t.chipBg, color: t.catColor }}>{t.initial}</div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.title}</div>
+                    <div style={{ fontSize: 11.5, color: t.accountLabel ? 'var(--muted2)' : 'var(--muted4)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: t.accountLabel ? 'normal' : 'italic' }}>{t.accountLabel || 'No account'}</div>
+                  </div>
+                  <div><span style={catChip(t)}>{t.catName}</span></div>
+                  <div style={{ fontSize: 13.5, color: 'var(--muted)' }}>{t.dateStr}</div>
+                  <div style={{ fontSize: 14.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: t.amountColor }}>{t.amountStr}</div>
+                  <div className="noprint" style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                    <RowActions t={t} onEdit={onEdit} onDelete={onDelete} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
       <Pager pager={pager} compact />
     </div>
   )
