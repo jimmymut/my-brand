@@ -67,11 +67,15 @@ export const SAVINGS_MONTHS = _monthList(_startIdx, _curIdx + FUTURE_MONTHS)
 export const ymIndex = (ym) => { const [y, m] = String(ym).split('-').map(Number); return _idx(y, m - 1) }
 export const ymFromIndex = (i) => _fromIdx(i)
 export const monthRange = (startYM, endYM) => _monthList(ymIndex(startYM), ymIndex(endYM))
-// the recordable window for a goal: its start → max(current, start) + FUTURE_MONTHS
-export const goalMonths = (startYM) => {
+// the recordable window for a goal: its start → max(current, start) + FUTURE_MONTHS,
+// never past an optional endYM (a monthly goal that has come to an end)
+export const goalMonths = (startYM, endYM) => {
   const s = startYM || SAVINGS_START
-  const end = Math.max(_curIdx, ymIndex(s)) + FUTURE_MONTHS
-  return _monthList(ymIndex(s), end)
+  const sIdx = ymIndex(s)
+  let end = Math.max(_curIdx, sIdx) + FUTURE_MONTHS
+  if (endYM) end = Math.min(end, ymIndex(endYM))
+  if (end < sIdx) end = sIdx
+  return _monthList(sIdx, end)
 }
 
 export const ACCENT = '#34D399'

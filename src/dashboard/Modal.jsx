@@ -105,12 +105,13 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
       return commit({ ...f })
     }
     if (kind === 'goal') {
+      const isTarget = f.goalType === 'target'
       const amt = parseFloat(String(f.target == null ? '' : f.target).replace(/[^0-9.]/g, ''))
       if (!String(f.name || '').trim()) e.name = 'Goal name is required'
-      if (!amt || amt <= 0) e.amount = 'Enter a monthly target'
-      if (!f.startMonth) e.startMonth = 'Choose a start month'
+      if (!amt || amt <= 0) e.amount = isTarget ? 'Enter the target amount' : 'Enter a monthly target'
+      if (!isTarget && !f.startMonth) e.startMonth = 'Choose a start month'
       if (Object.keys(e).length) return setErr(e)
-      return commit({ ...f, name: f.name.trim(), target: amt })
+      return commit({ ...f, name: f.name.trim(), target: amt, goalType: isTarget ? 'target' : 'monthly' })
     }
     if (kind === 'goalTarget') {
       const amt = parseFloat(String(f.target == null ? '' : f.target).replace(/[^0-9.]/g, ''))
@@ -168,7 +169,8 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
   const isFinance = kind === 'income' || kind === 'expense' || kind === 'saving'
   const isOther = kind === 'expense' && f.category === 'other'
   const selGoal = goalOpts.find((o) => o.value === f.bucket)
-  const goalMonthOpts = goalMonths(selGoal && selGoal.startMonth)
+  const goalIsTarget = !!(selGoal && selGoal.isTarget)
+  const goalMonthOpts = goalMonths(selGoal && selGoal.startMonth, selGoal && selGoal.endMonth)
   // accounts/wallets: any account for income/expense; spendable ones for the
   // wallet a saving is paid from / returned to
   const hasAccounts = accountOptions.length > 0
@@ -255,10 +257,16 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
                 </div>
                 <label style={lbl}>Savings goal</label>
                 <Pills options={goalOpts.map((o) => ({ value: o.value, name: o.name }))} value={f.bucket} onPick={(v) => { const bk = goalOpts.find((o) => o.value === v); set('bucket', v); if (bk && bk.account) set('account', bk.account) }} />
-                <label style={lbl}>For month</label>
-                <div style={{ maxHeight: 150, overflowY: 'auto', marginBottom: 16, paddingRight: 2 }}>
-                  <Pills options={goalMonthOpts.map((m) => ({ value: m, name: monthFull(m) }))} value={f.month} onPick={(v) => set('month', v)} />
-                </div>
+                {goalIsTarget ? (
+                  <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginBottom: 16 }}>Recorded toward the goal total.</div>
+                ) : (
+                  <>
+                    <label style={lbl}>For month</label>
+                    <div style={{ maxHeight: 150, overflowY: 'auto', marginBottom: 16, paddingRight: 2 }}>
+                      <Pills options={goalMonthOpts.map((m) => ({ value: m, name: monthFull(m) }))} value={f.month} onPick={(v) => set('month', v)} />
+                    </div>
+                  </>
+                )}
                 <label style={lbl}>Account / where it's held</label>
                 {savingsOpts.length || f.account ? (
                   <select value={f.account || ''} onChange={onInput('account')} style={{ ...inp(), cursor: 'pointer', marginBottom: 16 }}>
@@ -407,30 +415,63 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
             <input type="text" value={f.name || ''} onChange={onInput('name')} placeholder="e.g. New car, House deposit" style={{ ...inp(err.name && 'rgba(251,113,133,0.6)'), fontSize: 15, fontWeight: 600 }} />
             {err.name && <div style={errStyle}>{err.name}</div>}
             <div style={{ height: 16 }} />
-            {!edit ? (
+            {!edit && (
               <>
-                <label style={lbl}>Monthly target (FRw)</label>
+                <label style={lbl}>Goal type</label>
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  <button onClick={() => set('goalType', 'monthly')} style={dirStyle((f.goalType || 'monthly') === 'monthly', 'green')}>↻ Monthly target</button>
+                  <button onClick={() => set('goalType', 'target')} style={dirStyle(f.goalType === 'target', 'green')}>◎ One-time target</button>
+                </div>
+              </>
+            )}
+            {f.goalType === 'target' ? (
+              <>
+                <label style={lbl}>Total target (FRw)</label>
                 <input type="number" value={f.target == null ? '' : f.target} onChange={onInput('target')} placeholder="0" style={{ ...inp(err.amount && 'rgba(251,113,133,0.6)'), fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono'" }} />
                 {err.amount && <div style={errStyle}>{err.amount}</div>}
+                <div style={{ height: 16 }} />
+                <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={lbl}>Deadline (optional)</label>
+                    <input type="date" value={f.deadline || ''} onChange={onInput('deadline')} style={inp()} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={lbl}>Account (optional)</label>
+                    <input type="text" value={f.account || ''} onChange={onInput('account')} placeholder="e.g. BK" style={inp()} />
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 16 }}>Contributions add toward the total. It only shows as overdue if the deadline passes before you reach it.</div>
               </>
             ) : (
-              <div style={{ padding: '12px 14px', borderRadius: 11, background: 'var(--fill)', border: '1px solid var(--border)', fontSize: 12.5, color: 'var(--muted2)' }}>
-                Current target: <b style={{ color: 'var(--strong)' }}>{fmt(Number(f.target) || 0)}/mo</b>. To change it, use <b>Adjust target</b> on the goal card — that keeps past months on their old target and applies the new one going forward.
-              </div>
-            )}
-            <div style={{ height: 16 }} />
-            <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-              <div style={{ flex: 1 }}>
-                <label style={lbl}>Starts counting from</label>
-                <input type="month" value={f.startMonth || ''} onChange={onInput('startMonth')} style={inp(err.startMonth && 'rgba(251,113,133,0.6)')} />
-                {err.startMonth && <div style={errStyle}>{err.startMonth}</div>}
-              </div>
-              <div style={{ flex: 1 }}>
+              <>
+                {!edit ? (
+                  <>
+                    <label style={lbl}>Monthly target (FRw)</label>
+                    <input type="number" value={f.target == null ? '' : f.target} onChange={onInput('target')} placeholder="0" style={{ ...inp(err.amount && 'rgba(251,113,133,0.6)'), fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono'" }} />
+                    {err.amount && <div style={errStyle}>{err.amount}</div>}
+                  </>
+                ) : (
+                  <div style={{ padding: '12px 14px', borderRadius: 11, background: 'var(--fill)', border: '1px solid var(--border)', fontSize: 12.5, color: 'var(--muted2)' }}>
+                    Current target: <b style={{ color: 'var(--strong)' }}>{fmt(Number(f.target) || 0)}/mo</b>. To change it, use <b>Adjust target</b> on the goal card — that keeps past months on their old target and applies the new one going forward.
+                  </div>
+                )}
+                <div style={{ height: 16 }} />
+                <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={lbl}>Starts counting from</label>
+                    <input type="month" value={f.startMonth || ''} onChange={onInput('startMonth')} style={inp(err.startMonth && 'rgba(251,113,133,0.6)')} />
+                    {err.startMonth && <div style={errStyle}>{err.startMonth}</div>}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={lbl}>Ends (optional)</label>
+                    <input type="month" value={f.endMonth || ''} onChange={onInput('endMonth')} style={inp()} />
+                  </div>
+                </div>
                 <label style={lbl}>Account (optional)</label>
-                <input type="text" value={f.account || ''} onChange={onInput('account')} placeholder="e.g. BK, Ejo Heza" style={inp()} />
-              </div>
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 16 }}>Debt starts accruing from the start month — earlier months aren't counted.</div>
+                <input type="text" value={f.account || ''} onChange={onInput('account')} placeholder="e.g. BK, Ejo Heza" style={{ ...inp(), marginBottom: 16 }} />
+                <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 16 }}>Debt accrues from the start month; after the end month the goal stops counting.</div>
+              </>
+            )}
             <label style={lbl}>Colour</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
               {GOAL_COLORS.map((c) => (

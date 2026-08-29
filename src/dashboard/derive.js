@@ -1,6 +1,13 @@
 // Pure finance computations ported from the dashboard prototype's renderVals().
 import { BUCKETS, CATS, CURRENT, YEAR, MONTHS, priorityMeta, goalMonths } from '../lib/constants'
-import { fmt, monthLabel, monthFull, dateLabel, rgba } from '../lib/format'
+import { fmt, monthLabel, monthFull, dateLabel, rgba, today } from '../lib/format'
+
+// whole days from `a` to `b` (both "YYYY-MM-DD"); negative if b is in the past
+function daysBetween(a, b) {
+  const da = new Date(a + 'T00:00:00')
+  const db = new Date(b + 'T00:00:00')
+  return Math.round((db - da) / 86400000)
+}
 
 const STATUS = {
   met: { bg: 'rgba(52,211,153,0.16)', fg: '#1FA779', bd: 'rgba(52,211,153,0.4)', mark: '✓' },
@@ -220,18 +227,50 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
     id: g.id, name: g.name || 'Goal', short: g.short || g.name || 'Goal', sub: g.sub || 'Custom goal',
     target: g.target || 0, color: g.color || '#34D399', account: g.account || '',
     startMonth: g.startMonth || CURRENT, custom: true, targetSchedule: g.targetSchedule || [],
+    goalType: g.type || 'monthly', endMonth: g.endMonth || '', deadline: g.deadline || '',
   }))
   const allBuckets = BUCKETS.concat(goalDefs)
 
+  const nowStr = today()
   const buckets = allBuckets.map((b) => {
-    // a goal only counts from its start month (nothing before it is owed/missed),
-    // and can be pre-funded a few months past its start / the current month
-    // (goalMonths falls back to the default start when a goal has no startMonth)
-    const months = goalMonths(b.startMonth)
+    const account = acctName((contribs.filter((c) => c.bucket === b.id && c.account).slice(-1)[0] || {}).account || b.account || '')
+    const withdrawn = contribs.filter((c) => c.bucket === b.id && isWithdrawal(c)).reduce((a, c) => a + c.amount, 0)
+
+    /* ---- one-time TARGET goal: a lump sum to reach by a deadline ---- */
+    if (b.goalType === 'target') {
+      const deposited = contribs.filter((c) => c.bucket === b.id && !isWithdrawal(c)).reduce((a, c) => a + c.amount, 0)
+      const saved = deposited - withdrawn
+      const target = b.target || 0
+      const remaining = Math.max(0, target - saved)
+      const reached = target > 0 && saved >= target
+      const deadline = b.deadline || ''
+      const overdue = !!(deadline && !reached && deadline < nowStr)
+      const daysLeft = deadline ? daysBetween(nowStr, deadline) : null
+      const debt = overdue ? remaining : 0
+      const pct = target ? Math.min(100, Math.round((saved / target) * 100)) : 0
+      const thisMonth = contribs.filter((c) => c.bucket === b.id && !isWithdrawal(c) && c.month === CURRENT).reduce((a, c) => a + c.amount, 0)
+      return {
+        ...b, isTarget: true, account, byMonth: [], schedule: [], hasTargetChanges: false, ended: reached,
+        target, targetStr: fmt(target),
+        deposited, depositedStr: fmt(deposited), withdrawn, withdrawnStr: fmt(withdrawn), hasWithdrawn: withdrawn > 0,
+        saved, savedStr: fmt(saved), balance: saved, balanceStr: fmt(saved),
+        remaining, remainingStr: fmt(remaining), reached,
+        deadline, deadlineStr: deadline ? dateLabel(deadline) : '', daysLeft, overdue,
+        debt, debtStr: fmt(debt), hasDebt: debt > 0, debtPast: debt, debtPastStr: fmt(debt),
+        thisMonth, thisMonthStr: fmt(thisMonth), pct, pctStr: pct + '%',
+        softBg: rgba(b.color, 0.14),
+      }
+    }
+
+    /* ---- recurring MONTHLY goal (built-ins + custom monthly) ---- */
+    // a goal only counts from its start month, may end at endMonth, and can be
+    // pre-funded a few months ahead (goalMonths caps the window at endMonth)
+    const months = goalMonths(b.startMonth, b.endMonth)
     // target changes over time: custom goals carry their own schedule; built-ins
     // read overrides from the carrier doc. Each month uses its effective target.
     const schedule = b.custom ? (b.targetSchedule || []) : overrideScheduleFor(b.id)
     const curTarget = targetAt(b.target, schedule, CURRENT)
+    const ended = !!(b.endMonth && CURRENT > b.endMonth)
     // monthly target tracking is deposits-only — a withdrawal must not mark a month unmet
     const byMonth = months.map((mk) => {
       const tgt = targetAt(b.target, schedule, mk)
@@ -244,7 +283,6 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
       return { month: mk, label: monthLabel(mk), amount: amt, amountStr: fmt(amt), target: tgt, targetStr: fmt(tgt), status: st, mark: x.mark, bg: x.bg, fg: x.fg, bd: x.bd }
     })
     const deposited = byMonth.reduce((a, m) => a + m.amount, 0) // includes any pre-funded future months
-    const withdrawn = contribs.filter((c) => c.bucket === b.id && isWithdrawal(c)).reduce((a, c) => a + c.amount, 0)
     const saved = deposited - withdrawn // balance currently held
     const curCell = byMonth.find((m) => m.month === CURRENT)
     const thisMonth = curCell ? curCell.amount : 0
@@ -254,11 +292,9 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
     const debt = owed.reduce((a, m) => a + Math.max(0, m.target - m.amount), 0)
     const debtPast = owed.filter((m) => m.month < CURRENT).reduce((a, m) => a + Math.max(0, m.target - m.amount), 0)
     const pct = curTarget ? Math.min(100, Math.round(thisMonth / curTarget * 100)) : 0
-    // most recent account this goal was saved into, else the bucket default
-    const lastWithAccount = contribs.filter((c) => c.bucket === b.id && c.account).slice(-1)[0]
-    const account = acctName((lastWithAccount && lastWithAccount.account) || b.account || '')
     return {
-      ...b, target: curTarget, account, byMonth, schedule, hasTargetChanges: (schedule || []).length > 0,
+      ...b, isTarget: false, target: curTarget, account, byMonth, schedule, hasTargetChanges: (schedule || []).length > 0,
+      ended, endMonth: b.endMonth || '', endStr: b.endMonth ? monthFull(b.endMonth) : '',
       deposited, depositedStr: fmt(deposited), withdrawn, withdrawnStr: fmt(withdrawn), hasWithdrawn: withdrawn > 0,
       saved, savedStr: fmt(saved), balance: saved, balanceStr: fmt(saved),
       debt, debtStr: fmt(debt), hasDebt: debt > 0, debtPast, debtPastStr: fmt(debtPast),
@@ -268,20 +304,25 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
   })
   const totalDebt = buckets.reduce((a, b) => a + b.debt, 0)          // incl. current month
   const pastDebtTotal = buckets.reduce((a, b) => a + b.debtPast, 0)  // earlier months only
-  const targetTotal = buckets.reduce((a, b) => a + b.target, 0)
+  const targetTotal = buckets.filter((b) => !b.isTarget && !b.ended).reduce((a, b) => a + b.target, 0) // monthly commitment
   const savedRealMonth = buckets.reduce((a, b) => a + b.thisMonth, 0)
 
   // budget for the CURRENT month (reminders/overview/bell). The Budget tab shows
   // a month it picks itself, via a separate deriveBudget() call in the Dashboard.
   const { items, plannedTotal, spentTotal, remainingTotal, budget, budgetSpent, budgetRemaining, budgetPctInt, budgetOver, budgetNear, budgetColor, budgetSegs } = deriveBudget(budgetItems, tx, contribs, CURRENT)
 
-  // reminders (real current month)
-  const dueB = buckets.filter((b) => b.thisMonth < b.target)
-  const dueTotal = dueB.reduce((a, b) => a + (b.target - b.thisMonth), 0)
+  // reminders (real current month). Ended monthly goals never remind; target
+  // goals remind while unreached (with their deadline), separate from monthly due.
+  const dueMonthly = buckets.filter((b) => !b.isTarget && !b.ended && b.thisMonth < b.target)
+  const dueTarget = buckets.filter((b) => b.isTarget && !b.reached && b.remaining > 0)
+  const dueB = dueMonthly.concat(dueTarget)
+  const dueTotal = dueMonthly.reduce((a, b) => a + (b.target - b.thisMonth), 0) // this month's shortfall only
   const reminders = dueB.map((b) => ({
     bucketId: b.id, name: b.name, color: b.color,
-    note: (b.target - b.thisMonth > 0 ? ('FRw ' + (b.target - b.thisMonth).toLocaleString('en-US') + ' due') : '') + (b.debtPast > 0 ? (' · ' + fmt(b.debtPast) + ' overdue') : ''),
-    tone: b.debtPast > 0 ? '#E5577A' : 'var(--muted2)',
+    note: b.isTarget
+      ? (fmt(b.remaining) + ' to reach' + (b.deadline ? (b.overdue ? ' · overdue' : ' · by ' + b.deadlineStr) : ''))
+      : ((b.target - b.thisMonth > 0 ? ('FRw ' + (b.target - b.thisMonth).toLocaleString('en-US') + ' due') : '') + (b.debtPast > 0 ? (' · ' + fmt(b.debtPast) + ' overdue') : '')),
+    tone: (b.overdue || b.debtPast > 0) ? '#E5577A' : 'var(--muted2)',
   }))
   const reminderCount = dueB.length
   const hasReminder = reminderCount > 0 || totalDebt > 0

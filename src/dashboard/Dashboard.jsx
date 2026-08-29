@@ -111,7 +111,7 @@ export default function Dashboard() {
     else if (kind === 'post') initial = { title: '', excerpt: '', tag: 'Frontend', customTopic: '', image: '' }
     else if (kind === 'skill') initial = { name: '', desc: '', level: 75, icon: '' }
     else if (kind === 'budgetItem') initial = { name: '', amount: '', priority: 'low', month: budgetMonth }
-    else if (kind === 'goal') initial = { name: '', target: '', account: '', color: GOAL_COLORS[0], startMonth: CURRENT }
+    else if (kind === 'goal') initial = { name: '', target: '', account: '', color: GOAL_COLORS[0], startMonth: CURRENT, goalType: 'monthly', endMonth: '', deadline: '' }
     else if (kind === 'goalTarget') initial = { target: '', month: CURRENT, ...(preset || {}) }
     else if (kind === 'debt') initial = { direction: 'borrowed', name: '', amount: '', date: today(), due: '', desc: '', account: firstWallet }
     else if (kind === 'debtPayment') initial = { amount: '', date: today(), account: firstWallet, ...(preset || {}) }
@@ -128,6 +128,11 @@ export default function Dashboard() {
 
   const openSavingCell = (bucketId, monthKey) => {
     const b = derived.buckets.find((x) => x.id === bucketId)
+    // one-time target goal: no monthly grid — just record toward the total
+    if (b && b.isTarget) {
+      openModal('saving', null, { bucket: bucketId, month: CURRENT, amount: '' })
+      return
+    }
     // never open a month before the goal's start (e.g. the "Record" button on a future goal)
     const month = b && b.startMonth && monthKey < b.startMonth ? b.startMonth : monthKey
     // Top-up model: a month can be funded in portions that accumulate toward its
@@ -210,10 +215,11 @@ export default function Dashboard() {
       } else if (k === 'budgetItem') {
         await fin.saveBudgetItem({ id, name: f.name, amount: f.amount, spent: f.spent != null ? f.spent : 0, priority: f.priority || 'low', month: f.month || budgetMonth })
       } else if (k === 'goal') {
-        // base target is set on creation; later changes go through goalTarget so
-        // past months keep their old target (see openAdjustTarget)
-        const g = { id, name: f.name, short: f.name, sub: 'Custom goal', account: f.account || '', color: f.color || GOAL_COLORS[0], startMonth: f.startMonth || CURRENT }
-        if (!id) g.target = f.target
+        // monthly base target is set on creation; later changes go through goalTarget
+        // (past months keep their old target). Target goals edit their total directly.
+        const isTarget = f.goalType === 'target'
+        const g = { id, name: f.name, short: f.name, sub: isTarget ? 'One-time goal' : 'Custom goal', account: f.account || '', color: f.color || GOAL_COLORS[0], startMonth: f.startMonth || CURRENT, type: isTarget ? 'target' : 'monthly', endMonth: isTarget ? '' : (f.endMonth || ''), deadline: isTarget ? (f.deadline || '') : '' }
+        if (!id || isTarget) g.target = f.target
         await fin.saveGoal(g)
       } else if (k === 'goalTarget') {
         const bp = { month: f.month, target: f.target }
@@ -376,7 +382,7 @@ export default function Dashboard() {
         </div>
       </main>
 
-      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} bucketOptions={derived.buckets.map((b) => ({ value: b.id, name: b.short || b.name, account: b.account, startMonth: b.startMonth }))} accountOptions={fin.accounts.filter((a) => !a.archived).map((a) => ({ value: a.id, name: a.name, type: a.type, color: a.color }))} monthDeposits={savingMonthDeposits} onRemoveContrib={fin.removeContrib} />}
+      {modal && <Modal kind={modal.kind} edit={modal.edit} initial={modal.initial} onClose={() => setModal(null)} onSave={onSave} onRemove={removeSavingContrib} bucketOptions={derived.buckets.map((b) => ({ value: b.id, name: b.short || b.name, account: b.account, startMonth: b.startMonth, isTarget: b.isTarget, endMonth: b.endMonth }))} accountOptions={fin.accounts.filter((a) => !a.archived).map((a) => ({ value: a.id, name: a.name, type: a.type, color: a.color }))} monthDeposits={savingMonthDeposits} onRemoveContrib={fin.removeContrib} />}
     </div>
   )
 }

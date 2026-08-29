@@ -52,14 +52,16 @@ export default function SavingsTab({ d, recordMonth, onSavingCell, onWithdraw, o
                 </div>
                 <div>
                   <div style={{ fontFamily: "'Space Grotesk'", fontWeight: 600, fontSize: 16, color: 'var(--strong)' }}>{b.name}</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--muted3)' }}>{b.sub} · {b.targetStr}/mo</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--muted3)' }}>{b.sub} · {b.isTarget ? ('goal ' + b.targetStr + (b.deadlineStr ? ' · by ' + b.deadlineStr : '')) : (b.targetStr + '/mo' + (b.endStr ? ' · ends ' + b.endStr : ''))}</div>
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 {b.account && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', background: 'var(--fill)', border: '1px solid var(--border2)', padding: '4px 9px', borderRadius: 8 }}>{b.account}</span>}
-                {b.hasDebt && <span style={{ fontSize: 11, fontWeight: 700, color: '#E5577A', background: 'rgba(251,113,133,0.13)', border: '1px solid rgba(251,113,133,0.3)', padding: '4px 9px', borderRadius: 8 }}>Debt {b.debtStr}</span>}
+                {b.isTarget && b.reached && <span style={{ fontSize: 11, fontWeight: 700, color: '#1FA779', background: 'rgba(52,211,153,0.14)', border: '1px solid rgba(52,211,153,0.3)', padding: '4px 9px', borderRadius: 8 }}>Reached ✓</span>}
+                {!b.isTarget && b.ended && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', background: 'var(--fill)', border: '1px solid var(--border2)', padding: '4px 9px', borderRadius: 8 }}>Ended</span>}
+                {b.hasDebt && <span style={{ fontSize: 11, fontWeight: 700, color: '#E5577A', background: 'rgba(251,113,133,0.13)', border: '1px solid rgba(251,113,133,0.3)', padding: '4px 9px', borderRadius: 8 }}>{b.isTarget ? 'Overdue ' : 'Debt '}{b.debtStr}</span>}
                 <span className="noprint" style={{ display: 'flex', gap: 6 }}>
-                  {onAdjustTarget && <Hover onClick={() => onAdjustTarget(b)} title="Adjust monthly target (from a chosen month)" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>◎</Hover>}
+                  {!b.isTarget && onAdjustTarget && <Hover onClick={() => onAdjustTarget(b)} title="Adjust monthly target (from a chosen month)" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 13 }} hover={{ background: 'var(--hover)' }}>◎</Hover>}
                   {b.custom && (
                     <>
                       <Hover onClick={() => onEditGoal(b)} title="Edit goal" style={{ width: 28, height: 28, borderRadius: 8, border: '1px solid var(--border2)', background: 'var(--fill)', color: 'var(--muted)', cursor: 'pointer', fontSize: 12 }} hover={{ background: 'var(--hover)' }}>✎</Hover>
@@ -83,27 +85,46 @@ export default function SavingsTab({ d, recordMonth, onSavingCell, onWithdraw, o
               <div style={{ height: '100%', borderRadius: 100, background: b.color, width: b.pctStr }} />
             </div>
 
-            <div style={{ fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--muted3)', fontWeight: 700, marginBottom: 9 }}>Monthly record · tap to update</div>
-            <div style={{ marginBottom: 18 }}>
-              {groupByYear(b.byMonth).map(([year, months]) => (
-                <div key={year} style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--muted4)', marginBottom: 5 }}>{year}</div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 7 }}>
-                    {months.map((m) => (
-                      <button key={m.month} onClick={() => onSavingCell(b.id, m.month)} title={`${m.label} ${year} · ${m.amountStr}`} className="noprint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '9px 2px', borderRadius: 9, cursor: 'pointer', background: m.bg, border: `1px solid ${m.bd}` }}>
-                        <span style={{ fontSize: 11.5, fontWeight: 700, color: m.fg }}>{m.label}</span>
-                        <span style={{ fontSize: 11, color: m.fg }}>{m.mark}</span>
-                      </button>
-                    ))}
-                  </div>
+            {b.isTarget ? (
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: 13, marginBottom: 6 }}>
+                  <span style={{ color: 'var(--muted2)' }}>{b.savedStr} of {b.targetStr}</span>
+                  <span style={{ fontWeight: 700, color: b.reached ? '#1FA779' : (b.overdue ? '#E5577A' : 'var(--muted2)') }}>{b.reached ? 'Reached 🎉' : b.remainingStr + ' to go'}</span>
                 </div>
-              ))}
-            </div>
-
-            <div className="noprint" style={{ display: 'flex', gap: 8 }}>
-              <Hover onClick={() => onSavingCell(b.id, recordMonth)} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.10)', color: '#1FA779', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(52,211,153,0.18)' }}>Record {monthLabel(recordMonth)} contribution</Hover>
-              <Hover onClick={() => onWithdraw(b)} title="Record a withdrawal" style={{ padding: '11px 16px', borderRadius: 11, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>Withdraw</Hover>
-            </div>
+                <div style={{ fontSize: 12.5, color: b.overdue ? '#E5577A' : 'var(--muted3)', marginBottom: 18 }}>
+                  {b.deadline
+                    ? (b.overdue ? 'Deadline passed · ' + b.deadlineStr : (b.daysLeft != null ? b.daysLeft + ' day' + (b.daysLeft === 1 ? '' : 's') + ' left · by ' + b.deadlineStr : 'by ' + b.deadlineStr))
+                    : 'No deadline set'}
+                </div>
+                <div className="noprint" style={{ display: 'flex', gap: 8 }}>
+                  <Hover onClick={() => onSavingCell(b.id, recordMonth)} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.10)', color: '#1FA779', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(52,211,153,0.18)' }}>Record contribution</Hover>
+                  <Hover onClick={() => onWithdraw(b)} title="Record a withdrawal" style={{ padding: '11px 16px', borderRadius: 11, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>Withdraw</Hover>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--muted3)', fontWeight: 700, marginBottom: 9 }}>Monthly record · tap to update</div>
+                <div style={{ marginBottom: 18 }}>
+                  {groupByYear(b.byMonth).map(([year, months]) => (
+                    <div key={year} style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--muted4)', marginBottom: 5 }}>{year}</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 7 }}>
+                        {months.map((m) => (
+                          <button key={m.month} onClick={() => onSavingCell(b.id, m.month)} title={`${m.label} ${year} · ${m.amountStr}`} className="noprint" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, padding: '9px 2px', borderRadius: 9, cursor: 'pointer', background: m.bg, border: `1px solid ${m.bd}` }}>
+                            <span style={{ fontSize: 11.5, fontWeight: 700, color: m.fg }}>{m.label}</span>
+                            <span style={{ fontSize: 11, color: m.fg }}>{m.mark}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="noprint" style={{ display: 'flex', gap: 8 }}>
+                  <Hover onClick={() => onSavingCell(b.id, recordMonth)} style={{ flex: 1, padding: 11, borderRadius: 11, border: '1px solid rgba(52,211,153,0.3)', background: 'rgba(52,211,153,0.10)', color: '#1FA779', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(52,211,153,0.18)' }}>Record {monthLabel(recordMonth)} contribution</Hover>
+                  <Hover onClick={() => onWithdraw(b)} title="Record a withdrawal" style={{ padding: '11px 16px', borderRadius: 11, border: '1px solid rgba(251,113,133,0.3)', background: 'rgba(251,113,133,0.08)', color: '#E5577A', fontSize: 13.5, fontWeight: 700, cursor: 'pointer' }} hover={{ background: 'rgba(251,113,133,0.18)' }}>Withdraw</Hover>
+                </div>
+              </>
+            )}
           </div>
         ))}
       </div>
