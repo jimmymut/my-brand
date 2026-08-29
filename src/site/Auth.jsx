@@ -11,16 +11,19 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 const googleBtnStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 11, width: '100%', padding: 12, borderRadius: 12, border: '1px solid var(--border2)', background: 'var(--surface)', color: 'var(--text)', fontSize: 14.5, fontWeight: 700, cursor: 'pointer', marginBottom: 18 }
 const googleGlyph = <span style={{ width: 21, height: 21, borderRadius: '50%', background: '#fff', border: '1px solid #dadce0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Space Grotesk'", fontWeight: 700, fontSize: 13, color: '#4285F4' }}>G</span>
 
+const spinner = <span style={{ width: 17, height: 17, borderRadius: '50%', border: '2px solid var(--border2)', borderTopColor: '#1FA779', display: 'inline-block', animation: 'spin .7s linear infinite' }} />
+
 // Real Google auth-code login → backend /users/auth/google (redirect_uri "postmessage").
-function GoogleAuthButton({ onCode, onError }) {
+function GoogleAuthButton({ onCode, onError, busy, disabled }) {
   const login = useGoogleLogin({
     flow: 'auth-code',
     onSuccess: (resp) => onCode(resp.code),
     onError: () => onError('Google sign-in was cancelled or failed'),
   })
+  const blocked = busy || disabled // busy = this button; disabled = another auth in progress
   return (
-    <Hover onClick={() => login()} style={googleBtnStyle} hover={{ background: 'var(--fill)' }}>
-      {googleGlyph} Continue with Google
+    <Hover onClick={() => { if (!blocked) login() }} style={{ ...googleBtnStyle, cursor: blocked ? 'default' : 'pointer', opacity: blocked ? 0.7 : 1 }} hover={blocked ? {} : { background: 'var(--fill)' }}>
+      {busy ? <>{spinner} Signing you in…</> : <>{googleGlyph} Continue with Google</>}
     </Hover>
   )
 }
@@ -41,6 +44,8 @@ const emailOk = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)
 const input = (border) => ({ width: '100%', padding: '13px 15px', borderRadius: 11, background: 'var(--input)', border: `1px solid ${border || 'var(--border2)'}`, fontSize: 14.5, outline: 'none', color: 'var(--strong)' })
 const primaryBtn = { width: '100%', padding: 14, borderRadius: 12, border: 'none', fontSize: 15, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', boxShadow: '0 10px 26px rgba(16,185,129,0.3)', cursor: 'pointer', marginBottom: 10 }
 
+const RESEND_WAIT = 60 // seconds to wait before another code can be requested
+
 export default function Auth({ mode }) {
   const navigate = useNavigate()
   const { theme } = useTheme()
@@ -57,8 +62,12 @@ export default function Auth({ mode }) {
   const [resetToken, setResetToken] = useState('') // real OTP bearer token from backend
   const [resetEmail, setResetEmail] = useState('')
   const [googleOpen, setGoogleOpen] = useState(false)
+  const [googleBusy, setGoogleBusy] = useState(false)
+  const [resendIn, setResendIn] = useState(0)     // cooldown seconds left before a resend
+  const [resendBusy, setResendBusy] = useState(false)
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }))
+  const authBusy = busy || googleBusy // any auth in flight — lock every auth action
   const isLoginReg = stage === 'login' || stage === 'register'
   const goStage = (s) => { setStage(s); setErr(''); setNotice('') }
 
@@ -69,6 +78,13 @@ export default function Auth({ mode }) {
     setStage(mode === 'register' ? 'register' : 'login')
     setForm({}); setErr(''); setNotice('')
   }, [mode])
+
+  // tick down the resend cooldown once per second
+  useEffect(() => {
+    if (resendIn <= 0) return undefined
+    const t = setTimeout(() => setResendIn((n) => Math.max(0, n - 1)), 1000)
+    return () => clearTimeout(t)
+  }, [resendIn])
 
   // after a successful login, send admins to the dashboard, everyone else home
   const landAfter = (res) => {
@@ -89,7 +105,7 @@ export default function Auth({ mode }) {
       try {
         await register({ firstName: form.first.trim(), lastName: (form.last || '').trim(), email, password: form.pass, confirmPassword: form.confirm })
         // Account created — backend emailed a real 6-digit code. Move to verify.
-        setDemoCode(''); setOtpInput(''); setNotice(''); setStage('otp')
+        setDemoCode(''); setOtpInput(''); setNotice(''); setStage('otp'); setResendIn(RESEND_WAIT)
       } catch (e) {
         setErr(e.message || 'Could not create account')
       } finally { setBusy(false) }
@@ -120,9 +136,11 @@ export default function Auth({ mode }) {
     } finally { setBusy(false) }
   }
   const resendOtp = async () => {
-    setErr('')
+    if (resendIn > 0 || resendBusy) return // still within the grace period
+    setErr(''); setResendBusy(true)
     try { await Account.resendVerification(); setNotice('A fresh code has been sent to your email.') }
     catch { setDemoCode(genOtp()); setNotice('A fresh code has been generated.') }
+    finally { setResendBusy(false); setResendIn(RESEND_WAIT) }
   }
 
   /* --------------------------------------------------- forgot / reset */
@@ -133,11 +151,22 @@ export default function Auth({ mode }) {
     try {
       const res = await Account.requestOtp(email)
       setResetToken(res && res.token ? res.token : '')
-      setResetEmail(email); setDemoCode(''); setOtpInput(''); setStage('reset')
+      setResetEmail(email); setDemoCode(''); setOtpInput(''); setStage('reset'); setResendIn(RESEND_WAIT)
     } catch (e) {
       // offline fallback: simulate a code so the flow stays usable
-      setResetToken(''); setResetEmail(email); setDemoCode(genOtp()); setOtpInput(''); setStage('reset')
+      setResetToken(''); setResetEmail(email); setDemoCode(genOtp()); setOtpInput(''); setStage('reset'); setResendIn(RESEND_WAIT)
     } finally { setBusy(false) }
+  }
+  // resend the reset code (same grace period as verify)
+  const resendReset = async () => {
+    if (resendIn > 0 || resendBusy || !resetEmail) return
+    setErr(''); setResendBusy(true)
+    try {
+      const res = await Account.requestOtp(resetEmail)
+      setResetToken(res && res.token ? res.token : ''); setDemoCode(''); setNotice('A fresh reset code has been sent to your email.')
+    } catch {
+      setResetToken(''); setDemoCode(genOtp()); setNotice('A fresh code has been generated.')
+    } finally { setResendBusy(false); setResendIn(RESEND_WAIT) }
   }
   const submitReset = async () => {
     const code = otpInput.trim()
@@ -163,12 +192,16 @@ export default function Auth({ mode }) {
   // real OAuth: exchange the authorization code with the backend
   const handleGoogleCode = async (code) => {
     setErr('')
-    try { landAfter(await googleSignIn(null, code)) } catch (e) { setErr(e.message || 'Google sign-in failed') }
+    setGoogleBusy(true) // popup closed — now waiting on the server; lock the button
+    try { landAfter(await googleSignIn(null, code)) } // success navigates away
+    catch (e) { setErr(e.message || 'Google sign-in failed'); setGoogleBusy(false) }
   }
   // fallback (no client id configured): simulated account picker from the design
   const pickGoogle = async (acc) => {
     setGoogleOpen(false)
-    try { await googleSignIn(acc); navigate('/') } catch (e) { setErr(e.message || 'Google sign-in failed') }
+    setGoogleBusy(true)
+    try { await googleSignIn(acc); navigate('/') }
+    catch (e) { setErr(e.message || 'Google sign-in failed'); setGoogleBusy(false) }
   }
 
   const brand = BRAND[stage]
@@ -202,10 +235,10 @@ export default function Auth({ mode }) {
                 </p>
 
                 {GOOGLE_CLIENT_ID
-                  ? <GoogleAuthButton onCode={handleGoogleCode} onError={setErr} />
+                  ? <GoogleAuthButton onCode={handleGoogleCode} onError={setErr} busy={googleBusy} disabled={busy} />
                   : (
-                    <Hover onClick={() => { setGoogleOpen(true); setErr('') }} style={googleBtnStyle} hover={{ background: 'var(--fill)' }}>
-                      {googleGlyph} Continue with Google
+                    <Hover onClick={() => { if (!authBusy) { setGoogleOpen(true); setErr('') } }} style={{ ...googleBtnStyle, cursor: authBusy ? 'default' : 'pointer', opacity: authBusy ? 0.7 : 1 }} hover={authBusy ? {} : { background: 'var(--fill)' }}>
+                      {googleBusy ? <>{spinner} Signing you in…</> : <>{googleGlyph} Continue with Google</>}
                     </Hover>
                   )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
@@ -235,7 +268,7 @@ export default function Auth({ mode }) {
                 )}
                 {notice && <div style={{ fontSize: 13, color: '#1FA779', background: 'rgba(52,211,153,0.10)', border: '1px solid rgba(52,211,153,0.3)', borderRadius: 10, padding: '11px 13px', marginBottom: 12 }}>{notice}</div>}
                 {err && <div style={{ fontSize: 13, color: '#E5577A', marginBottom: 14 }}>{err}</div>}
-                <button onClick={submit} disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? 'Please wait…' : stage === 'register' ? 'Create account' : 'Log in'}</button>
+                <button onClick={submit} disabled={authBusy} style={{ ...primaryBtn, opacity: authBusy ? 0.7 : 1, cursor: authBusy ? 'default' : 'pointer' }}>{busy ? 'Please wait…' : stage === 'register' ? 'Create account' : 'Log in'}</button>
                 <button onClick={() => navigate('/')} style={{ width: '100%', padding: 12, borderRadius: 12, border: '1px solid var(--border2)', background: 'transparent', color: 'var(--muted)', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>Back to home</button>
               </>
             )}
@@ -253,8 +286,12 @@ export default function Auth({ mode }) {
                 <input value={otpInput} onChange={(e) => setOtpInput(e.target.value)} placeholder="••••••" maxLength={6} inputMode="numeric" style={{ ...input(), fontSize: 24, fontWeight: 700, fontFamily: "'JetBrains Mono'", letterSpacing: 10, textAlign: 'center', marginBottom: 14 }} />
                 {err && <div style={{ fontSize: 13, color: '#E5577A', marginBottom: 14 }}>{err}</div>}
                 {notice && <div style={{ fontSize: 13, color: '#1FA779', marginBottom: 12 }}>{notice}</div>}
-                <button onClick={verifyOtp} style={primaryBtn}>Verify &amp; continue</button>
-                <div style={{ textAlign: 'center' }}><button onClick={resendOtp} style={{ border: 'none', background: 'none', color: '#1FA779', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Resend code</button></div>
+                <button onClick={verifyOtp} disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1, cursor: busy ? 'default' : 'pointer' }}>{busy ? 'Verifying…' : 'Verify & continue'}</button>
+                <div style={{ textAlign: 'center' }}>
+                  <button onClick={resendOtp} disabled={resendIn > 0 || resendBusy} style={{ border: 'none', background: 'none', color: (resendIn > 0 || resendBusy) ? 'var(--muted3)' : '#1FA779', fontSize: 13, fontWeight: 700, cursor: (resendIn > 0 || resendBusy) ? 'default' : 'pointer' }}>
+                    {resendBusy ? 'Sending…' : resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+                  </button>
+                </div>
               </>
             )}
 
@@ -285,7 +322,13 @@ export default function Auth({ mode }) {
                 <input type="password" value={form.confirm || ''} onChange={set('confirm')} placeholder="Confirm new password" style={{ ...input(), marginBottom: 14 }} />
                 {err && <div style={{ fontSize: 13, color: '#E5577A', marginBottom: 14 }}>{err}</div>}
                 <button onClick={submitReset} disabled={busy} style={{ ...primaryBtn, opacity: busy ? 0.7 : 1 }}>{busy ? 'Updating…' : 'Update password'}</button>
-                <div style={{ textAlign: 'center' }}><button onClick={() => goStage('login')} style={{ border: 'none', background: 'none', color: 'var(--muted)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Back to log in</button></div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+                  <button onClick={resendReset} disabled={resendIn > 0 || resendBusy} style={{ border: 'none', background: 'none', color: (resendIn > 0 || resendBusy) ? 'var(--muted3)' : '#1FA779', fontSize: 13, fontWeight: 700, cursor: (resendIn > 0 || resendBusy) ? 'default' : 'pointer' }}>
+                    {resendBusy ? 'Sending…' : resendIn > 0 ? `Resend code in ${resendIn}s` : 'Resend code'}
+                  </button>
+                  <span style={{ color: 'var(--border2)' }}>·</span>
+                  <button onClick={() => goStage('login')} style={{ border: 'none', background: 'none', color: 'var(--muted)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Back to log in</button>
+                </div>
               </>
             )}
           </div>

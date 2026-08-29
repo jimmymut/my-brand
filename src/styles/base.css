@@ -19,6 +19,7 @@ input[type=date], input[type=number], input[type=month] { color-scheme: light da
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
 @keyframes heroSlide { 0%, 100% { opacity: 0; } 4%, 29% { opacity: 1; } 33% { opacity: 0; } }
 @keyframes pop { 0% { opacity: 0; transform: scale(0.96) translateY(8px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @media print {
   aside, .noprint { display: none !important; }
