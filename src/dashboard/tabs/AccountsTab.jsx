@@ -4,14 +4,17 @@ import { fmt } from '../../lib/format'
 
 const card = { padding: '20px 22px', borderRadius: 16, background: 'var(--surface)', border: '1px solid var(--border)' }
 
-export default function AccountsTab({ d, onAddAccount, onEditAccount, onDeleteAccount }) {
+export default function AccountsTab({ d, onAddAccount, onEditAccount, onDeleteAccount, onTransfer }) {
   const info = d.accountsInfo || { spendableTotal: 0, savingsTotal: 0, netWorth: 0, unassigned: { has: false } }
   const accounts = d.accounts || []
   return (
     <div>
       <div className="noprint" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ fontSize: 13.5, color: 'var(--muted2)' }}>{accounts.length} account{accounts.length === 1 ? '' : 's'} · where your money sits</div>
-        <button onClick={onAddAccount} style={{ display: 'flex', alignItems: 'center', gap: 7, height: 38, padding: '0 16px', border: 'none', borderRadius: 11, cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', boxShadow: '0 8px 20px rgba(16,185,129,0.26)' }}><span style={{ fontSize: 17, lineHeight: 1 }}>+</span> New account</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {onTransfer && accounts.length >= 2 && <button onClick={onTransfer} style={{ display: 'flex', alignItems: 'center', gap: 7, height: 38, padding: '0 15px', border: '1px solid var(--border2)', borderRadius: 11, cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: 'var(--text)', background: 'var(--fill)' }}>⇄ Transfer</button>}
+          <button onClick={onAddAccount} style={{ display: 'flex', alignItems: 'center', gap: 7, height: 38, padding: '0 16px', border: 'none', borderRadius: 11, cursor: 'pointer', fontSize: 13.5, fontWeight: 700, color: '#04110B', background: 'linear-gradient(135deg,#34D399,#10B981)', boxShadow: '0 8px 20px rgba(16,185,129,0.26)' }}><span style={{ fontSize: 17, lineHeight: 1 }}>+</span> New account</button>
+        </div>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(214px,1fr))', gap: 18, marginBottom: 22 }}>

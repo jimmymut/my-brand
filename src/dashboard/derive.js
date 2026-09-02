@@ -72,7 +72,7 @@ export function accountResolver(accounts) {
 // still resolved for legacy/built-in data). balance = opening + income in
 // − expenses out + deposits landing here − deposits paid from here
 // − withdrawals taken from here + withdrawals returned here.
-export function deriveAccounts(accounts, tx, contribs, assets, debts) {
+export function deriveAccounts(accounts, tx, contribs, assets, debts, transfers) {
   const list = accounts || []
   const resolve = accountResolver(list)
   const inflow = {}, outflow = {}
@@ -101,6 +101,10 @@ export function deriveAccounts(accounts, tx, contribs, assets, debts) {
     ;(d.payments || []).forEach((p) => {
       if (p.account) bump(borrowed ? outflow : inflow, resolve(p.account), p.amount)
     })
+  })
+  ;(transfers || []).forEach((t) => {
+    bump(outflow, resolve(t.fromAccount), t.amount) // leaves the source wallet
+    bump(inflow, resolve(t.toAccount), t.amount)    // lands in the destination
   })
   const views = list.filter((a) => !a.archived).slice().sort((a, b) => (a.order || 0) - (b.order || 0)).map((a) => {
     const inf = inflow[a.id] || 0
@@ -182,7 +186,7 @@ export function deriveAssets(assets, accounts) {
   }
 }
 
-export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, assets, debts }, { range, selMonth, txFilter }) {
+export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, assets, debts, transfers }, { range, selMonth, txFilter }) {
   const inScope = (d) => {
     if (range === 'all') return true
     if (range === 'year') return d.slice(0, 4) === YEAR
@@ -396,13 +400,22 @@ export function deriveFinance({ tx, contribs, budgetItems, goals, accounts, asse
       })
     })
   })
+  // transfers — neutral ledger rows (money relocated, not income/expense)
+  const transferRows = (transfers || []).filter((t) => inScope(t.date)).map((t) => ({
+    id: 'xfer-' + t.id, kind: 'transfer', isIncome: false, date: t.date,
+    title: t.note || 'Transfer',
+    catName: 'Transfer', catColor: '#818CF8', chipBg: rgba('#818CF8', 0.16),
+    initial: '⇄', amountStr: fmt(t.amount), amountColor: 'var(--muted)',
+    account: t.fromAccount || '', accountLabel: acctName(t.fromAccount) + ' → ' + acctName(t.toAccount),
+    dateStr: dateLabel(t.date), raw: t,
+  }))
   const scopeContribs = contribs.filter((c) => inScope(c.date))
-  const feed = scopeTx.map(disp).concat(scopeContribs.map(savingDisp)).concat(debtRows).sort((a, b) => (a.date < b.date ? 1 : -1))
+  const feed = scopeTx.map(disp).concat(scopeContribs.map(savingDisp)).concat(debtRows).concat(transferRows).sort((a, b) => (a.date < b.date ? 1 : -1))
   const recent = feed.slice(0, 6)
   const filtered = feed.filter((t) => (txFilter === 'all' ? true : t.kind === txFilter))
   const net = periodIncome - periodExpense
 
-  const accountsView = deriveAccounts(accounts, tx, contribs, assets, debts)
+  const accountsView = deriveAccounts(accounts, tx, contribs, assets, debts, transfers)
   const assetsView = deriveAssets(assets, accounts)
   // Once wallets exist, the "available balance" is the real spendable cash across
   // them (so borrowing, openings, asset buys… all show). Otherwise fall back to

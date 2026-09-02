@@ -62,8 +62,8 @@ export default function Dashboard() {
   useEffect(() => { refetchContent() }, [])
 
   const derived = useMemo(
-    () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems, goals: fin.goals, accounts: fin.accounts, assets: fin.assets, debts: debtStore.debts }, { range, selMonth, txFilter }),
-    [fin.tx, fin.contribs, fin.budgetItems, fin.goals, fin.accounts, fin.assets, debtStore.debts, range, selMonth, txFilter]
+    () => deriveFinance({ tx: fin.tx, contribs: fin.contribs, budgetItems: fin.budgetItems, goals: fin.goals, accounts: fin.accounts, assets: fin.assets, debts: debtStore.debts, transfers: fin.transfers }, { range, selMonth, txFilter }),
+    [fin.tx, fin.contribs, fin.budgetItems, fin.goals, fin.accounts, fin.assets, fin.transfers, debtStore.debts, range, selMonth, txFilter]
   )
 
   // the Budget tab plans a month of its own (incl. future months) — derived
@@ -106,6 +106,7 @@ export default function Dashboard() {
       initial = { amount: '', bucket: bucketId, month: recordMonth, date: today(), kind: 'deposit', account: heldAcc ? heldAcc.id : heldName, wallet: firstWallet, ...pre }
     }
     else if (kind === 'account') initial = { name: '', type: 'spendable', color: GOAL_COLORS[0], openingBalance: '' }
+    else if (kind === 'transfer') initial = { amount: '', fromAccount: firstWallet, toAccount: '', date: today(), note: '' }
     else if (kind === 'asset') initial = { name: '', type: 'other', value: '', cost: '', sizeUnit: 'sqm', acquiredDate: '', wallet: '', color: GOAL_COLORS[0] }
     else if (kind === 'assetSale') initial = { soldAmount: '', soldWallet: firstWallet, soldDate: today(), ...(preset || {}) }
     else if (kind === 'post') initial = { title: '', excerpt: '', tag: 'Frontend', customTopic: '', image: '' }
@@ -208,6 +209,8 @@ export default function Dashboard() {
         await fin.saveContrib({ id, bucket: f.bucket, amount: f.amount, month: f.month, date: f.date, account: f.account || '', wallet: f.wallet || '', kind: f.kind || 'deposit' })
       } else if (k === 'account') {
         await fin.saveAccount({ id, name: f.name, type: f.type || 'spendable', color: f.color || GOAL_COLORS[0], openingBalance: f.openingBalance })
+      } else if (k === 'transfer') {
+        await fin.saveTransfer({ id, fromAccount: f.fromAccount, toAccount: f.toAccount, amount: f.amount, date: f.date, note: f.note || '' })
       } else if (k === 'asset') {
         await fin.saveAsset({ id, name: f.name, type: f.type || 'other', value: f.value, cost: f.cost || 0, acquiredDate: f.acquiredDate || '', location: f.location || '', size: f.size || 0, sizeUnit: f.sizeUnit || 'sqm', upi: f.upi || '', plate: f.plate || '', year: f.year || 0, notes: f.notes || '', color: f.color || GOAL_COLORS[0], wallet: f.wallet || '' })
       } else if (k === 'assetSale') {
@@ -369,8 +372,8 @@ export default function Dashboard() {
 
         <div className="dash-content" style={{ padding: '28px 32px 60px' }}>
           {tab === 'overview' && <OverviewTab d={derived} setTab={setTab} onSavingCell={openSavingCell} />}
-          {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(t) => openModal(t.kind, t.raw)} onDelete={(t) => (t.kind === 'saving' ? fin.removeContrib(t.raw.id) : fin.removeTx(t.raw.id))} />}
-          {tab === 'accounts' && <AccountsTab d={derived} onAddAccount={() => openModal('account')} onEditAccount={(a) => openModal('account', fin.accounts.find((x) => x.id === a.id) || a)} onDeleteAccount={fin.removeAccount} />}
+          {tab === 'transactions' && <TransactionsTab d={derived} txFilter={txFilter} setTxFilter={setTxFilter} onEdit={(t) => openModal(t.kind, t.raw)} onDelete={(t) => (t.kind === 'saving' ? fin.removeContrib(t.raw.id) : t.kind === 'transfer' ? fin.removeTransfer(t.raw.id) : fin.removeTx(t.raw.id))} />}
+          {tab === 'accounts' && <AccountsTab d={derived} onAddAccount={() => openModal('account')} onEditAccount={(a) => openModal('account', fin.accounts.find((x) => x.id === a.id) || a)} onDeleteAccount={fin.removeAccount} onTransfer={() => openModal('transfer')} />}
           {tab === 'assets' && <AssetsTab d={derived} debt={debtD} onAddAsset={() => openModal('asset')} onEditAsset={(it) => openModal('asset', it.raw || fin.assets.find((x) => x.id === it.id) || it)} onDeleteAsset={fin.removeAsset} onSellAsset={(it) => openModal('assetSale', null, { _id: it.id, _assetName: it.name, _assetValue: it.value, soldAmount: String(it.value || '') })} />}
           {tab === 'savings' && <SavingsTab d={derived} recordMonth={recordMonth} onSavingCell={openSavingCell} onWithdraw={(b) => openModal('saving', null, { bucket: b.id, month: recordMonth, kind: 'withdrawal', amount: '', account: b.account })} onAddGoal={() => openModal('goal')} onEditGoal={(g) => openModal('goal', g)} onDeleteGoal={fin.removeGoal} onAdjustTarget={openAdjustTarget} />}
           {tab === 'budget' && <BudgetTab d={budgetView} month={budgetMonth} canPrev={canPrevBudget} canNext={canNextBudget} onPrevMonth={() => shiftBudgetMonth(-1)} onNextMonth={() => shiftBudgetMonth(1)} sourceMonths={budgetSourceMonths} onCopyFrom={copyBudgetFrom} onAddItem={() => openModal('budgetItem')} onEditItem={(it) => openModal('budgetItem', it)} onDeleteItem={fin.removeBudgetItem} onSpentChange={fin.updateItemSpent} onReorder={fin.reorderBudgetItems} />}

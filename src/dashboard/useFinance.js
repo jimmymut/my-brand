@@ -22,6 +22,7 @@ export function useFinance() {
   const [goals, setGoals] = useState([])
   const [accounts, setAccounts] = useState([])
   const [assets, setAssets] = useState([])
+  const [transfers, setTransfers] = useState([])
   const itemsRef = useRef([])
   useEffect(() => { itemsRef.current = budgetItems }, [budgetItems])
 
@@ -33,6 +34,7 @@ export function useFinance() {
     if (Array.isArray(s.goals)) setGoals(s.goals)
     if (Array.isArray(s.accounts)) setAccounts(s.accounts)
     if (Array.isArray(s.assets)) setAssets(s.assets)
+    if (Array.isArray(s.transfers)) setTransfers(s.transfers)
   }, [])
   const resync = useCallback(() => { Finance.state().then(hydrate).catch(() => {}) }, [hydrate])
 
@@ -199,5 +201,23 @@ export function useFinance() {
     catch (e) { writeError('change', e) }
   }, [writeError])
 
-  return { tx, contribs, budgetItems, goals, accounts, assets, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal, saveAccount, removeAccount, saveAsset, removeAsset }
+  /* -------------------------------------------- transfers (confirm-first) */
+  const saveTransfer = useCallback(async (rec) => {
+    try {
+      if (rec.id) {
+        await Finance.updateTransfer(rec.id, rec)
+        setTransfers((cur) => cur.map((t) => (t.id === rec.id ? { ...t, ...rec } : t)))
+      } else {
+        const saved = await Finance.addTransfer(rec)
+        setTransfers((cur) => cur.concat([docId(saved) ? saved : { ...rec, id: uid() }]))
+      }
+    } catch (e) { writeError('transfer', e); throw e }
+  }, [writeError])
+
+  const removeTransfer = useCallback(async (id) => {
+    try { await Finance.removeTransfer(id); setTransfers((cur) => cur.filter((t) => t.id !== id)) }
+    catch (e) { writeError('change', e) }
+  }, [writeError])
+
+  return { tx, contribs, budgetItems, goals, accounts, assets, transfers, saveTx, removeTx, saveContrib, removeContrib, saveBudgetItem, reorderBudgetItems, updateItemSpent, removeBudgetItem, copyBudget, saveGoal, removeGoal, saveAccount, removeAccount, saveAsset, removeAsset, saveTransfer, removeTransfer }
 }

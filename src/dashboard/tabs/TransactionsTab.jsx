@@ -46,6 +46,7 @@ export default function TransactionsTab({ d, txFilter, setTxFilter, onEdit, onDe
           <button onClick={() => reset(setTxFilter)('expense')} style={filterBtn(txFilter === 'expense')}>Expenses</button>
           <button onClick={() => reset(setTxFilter)('saving')} style={filterBtn(txFilter === 'saving')}>Saved</button>
           <button onClick={() => reset(setTxFilter)('debt')} style={filterBtn(txFilter === 'debt')}>Debt</button>
+          <button onClick={() => reset(setTxFilter)('transfer')} style={filterBtn(txFilter === 'transfer')}>Transfers</button>
           <select value={txCat} onChange={(e) => reset(setTxCat)(e.target.value)} style={{ padding: '9px 14px', borderRadius: 10, border: '1px solid var(--border2)', background: 'var(--surface)', color: 'var(--text)', fontSize: 13.5, fontWeight: 600, cursor: 'pointer', outline: 'none' }}>
             <option value="all">All categories</option>
             <option value="rent">Rent</option>

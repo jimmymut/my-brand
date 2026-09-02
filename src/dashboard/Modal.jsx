@@ -14,6 +14,7 @@ const TITLES = {
   goal: (e) => (e ? 'Edit goal' : 'New savings goal'),
   goalTarget: () => 'Adjust monthly target',
   account: (e) => (e ? 'Edit account' : 'New account'),
+  transfer: (e) => (e ? 'Edit transfer' : 'Transfer funds'),
   asset: (e) => (e ? 'Edit asset' : 'New asset'),
   assetSale: () => 'Record a sale',
   debt: (e) => (e ? 'Edit debt' : 'Add a debt'),
@@ -126,6 +127,15 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
       const opening = parseFloat(String(f.openingBalance == null ? '' : f.openingBalance).replace(/[^0-9.-]/g, '')) || 0
       return commit({ ...f, name: f.name.trim(), type: f.type || 'spendable', openingBalance: opening })
     }
+    if (kind === 'transfer') {
+      const amt = parseFloat(String(f.amount == null ? '' : f.amount).replace(/[^0-9.]/g, ''))
+      if (!amt || amt <= 0) e.amount = 'Enter an amount greater than 0'
+      if (!f.fromAccount) e.fromAccount = 'Choose the source wallet'
+      if (!f.toAccount) e.toAccount = 'Choose the destination wallet'
+      if (f.fromAccount && f.toAccount && f.fromAccount === f.toAccount) e.toAccount = 'Pick a different wallet'
+      if (Object.keys(e).length) return setErr(e)
+      return commit({ ...f, amount: amt })
+    }
     if (kind === 'asset') {
       if (!String(f.name || '').trim()) e.name = 'Name is required'
       const value = parseFloat(String(f.value == null ? '' : f.value).replace(/[^0-9.]/g, '')) || 0
@@ -165,7 +175,7 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
     commit({ ...f, amount: amt })
   }
 
-  const saveLabel = kind === 'goalTarget' ? 'Update target' : kind === 'assetSale' ? 'Record sale' : edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'goal' ? 'Create goal' : kind === 'account' ? 'Create account' : kind === 'asset' ? 'Add asset' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
+  const saveLabel = kind === 'goalTarget' ? 'Update target' : kind === 'assetSale' ? 'Record sale' : edit ? 'Save changes' : kind === 'post' ? 'Publish' : kind === 'skill' || kind === 'work' ? 'Add' : kind === 'budgetItem' ? 'Add item' : kind === 'goal' ? 'Create goal' : kind === 'account' ? 'Create account' : kind === 'transfer' ? 'Transfer' : kind === 'asset' ? 'Add asset' : kind === 'debt' ? 'Add debt' : kind === 'debtPayment' ? 'Record payment' : 'Add entry'
   const isFinance = kind === 'income' || kind === 'expense' || kind === 'saving'
   const isOther = kind === 'expense' && f.category === 'other'
   const selGoal = goalOpts.find((o) => o.value === f.bucket)
@@ -521,6 +531,42 @@ export default function Modal({ kind, edit, initial, onClose, onSave, onRemove, 
                 <button key={c} onClick={() => set('color', c)} title={c} style={{ width: 30, height: 30, borderRadius: 8, cursor: 'pointer', background: c, border: (f.color || GOAL_COLORS[0]) === c ? '3px solid var(--strong)' : '1px solid var(--border2)' }} />
               ))}
             </div>
+          </>
+        )}
+
+        {kind === 'transfer' && (
+          <>
+            <label style={lbl}>Amount (FRw)</label>
+            <input type="number" value={f.amount == null ? '' : f.amount} onChange={onInput('amount')} placeholder="0" style={{ ...inp(err.amount && 'rgba(251,113,133,0.6)'), fontSize: 17, fontWeight: 700, fontFamily: "'JetBrains Mono'" }} />
+            {err.amount && <div style={errStyle}>{err.amount}</div>}
+            <div style={{ height: 16 }} />
+            {hasAccounts ? (
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 16 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>From</label>
+                  <select value={f.fromAccount || ''} onChange={onInput('fromAccount')} style={{ ...inp(err.fromAccount && 'rgba(251,113,133,0.6)'), cursor: 'pointer' }}>
+                    <option value="" disabled>Source…</option>
+                    {withCurrent(accountOptions, f.fromAccount).map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                  </select>
+                </div>
+                <span style={{ paddingBottom: 12, color: 'var(--muted3)', fontSize: 16 }}>→</span>
+                <div style={{ flex: 1 }}>
+                  <label style={lbl}>To</label>
+                  <select value={f.toAccount || ''} onChange={onInput('toAccount')} style={{ ...inp(err.toAccount && 'rgba(251,113,133,0.6)'), cursor: 'pointer' }}>
+                    <option value="" disabled>Destination…</option>
+                    {withCurrent(accountOptions, f.toAccount).map((a) => <option key={a.value} value={a.value}>{a.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 12.5, color: 'var(--muted3)', marginBottom: 16 }}>No accounts yet — add wallets in the Accounts tab first.</div>
+            )}
+            {(err.fromAccount || err.toAccount) && <div style={{ ...errStyle, marginTop: -8, marginBottom: 12 }}>{err.fromAccount || err.toAccount}</div>}
+            <div style={{ fontSize: 12, color: 'var(--muted3)', marginBottom: 16 }}>Just relocates money between wallets — it isn't counted as income or expense.</div>
+            <label style={lbl}>Note (optional)</label>
+            <input type="text" value={f.note || ''} onChange={onInput('note')} placeholder="e.g. Move to savings" style={{ ...inp(), marginBottom: 16 }} />
+            <label style={lbl}>Date</label>
+            <input type="date" value={f.date || today()} onChange={onInput('date')} style={{ ...inp(), marginBottom: 24 }} />
           </>
         )}
 

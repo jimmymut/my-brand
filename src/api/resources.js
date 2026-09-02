@@ -146,4 +146,7 @@ export const Finance = {
   addAsset: (a) => api.post('/finance/assets', a, true),
   updateAsset: (id, a) => api.patch(`/finance/assets/${id}`, a, true),
   removeAsset: (id) => api.del(`/finance/assets/${id}`, true),
+  addTransfer: (t) => api.post('/finance/transfers', t, true),
+  updateTransfer: (id, t) => api.patch(`/finance/transfers/${id}`, t, true),
+  removeTransfer: (id) => api.del(`/finance/transfers/${id}`, true),
 }
