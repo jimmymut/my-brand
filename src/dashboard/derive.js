@@ -30,16 +30,25 @@ export function targetAt(base, schedule, mk) {
   return t
 }
 
-// Budget for a single month. Plan items are scoped by their `month` (legacy
-// items with no month count as the current month). `budgetSegs` shows that
-// month's recorded expenses + savings set aside, for reference.
+// The month a budget item belongs to. Explicit `month` wins; a legacy item with
+// no month is pinned to the month it was created (never the moving current
+// month, so past months keep their own plan) and only falls back to CURRENT if
+// even that is missing.
+export function budgetItemMonth(it) {
+  if (it && it.month) return it.month
+  if (it && it.createdAt) return String(it.createdAt).slice(0, 7)
+  return CURRENT
+}
+
+// Budget for a single month. Plan items are scoped by their `month`.
+// `budgetSegs` shows that month's recorded expenses + savings set aside.
 export function deriveBudget(budgetItems, tx, contribs, month) {
-  const items = (budgetItems || []).filter((it) => (it.month || CURRENT) === month).map((it) => {
+  const items = (budgetItems || []).filter((it) => budgetItemMonth(it) === month).map((it) => {
     const sp = it.spent || 0
     const rem = (it.amount || 0) - sp
     const priority = it.priority || 'low'
     const pm = priorityMeta(priority)
-    return { id: it.id, name: it.name, amount: it.amount, valueStr: fmt(it.amount), spent: sp, spentVal: sp, spentStr: fmt(sp), remaining: rem, remainingStr: fmt(rem), remainingColor: rem < 0 ? '#E5577A' : 'var(--text2)', priority, priorityLabel: pm.label, priorityColor: pm.color, priorityRank: pm.rank, order: it.order || 0, month: it.month || CURRENT }
+    return { id: it.id, name: it.name, amount: it.amount, valueStr: fmt(it.amount), spent: sp, spentVal: sp, spentStr: fmt(sp), remaining: rem, remainingStr: fmt(rem), remainingColor: rem < 0 ? '#E5577A' : 'var(--text2)', priority, priorityLabel: pm.label, priorityColor: pm.color, priorityRank: pm.rank, order: it.order || 0, month: budgetItemMonth(it) }
   }).sort((a, b) => a.order - b.order) // manual drag order
   const plannedTotal = items.reduce((a, it) => a + (it.amount || 0), 0)
   const spentTotal = items.reduce((a, it) => a + (it.spent || 0), 0)

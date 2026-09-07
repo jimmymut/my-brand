@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import { useFinance } from './useFinance'
 import { useDebts } from './useDebts'
-import { deriveFinance, deriveBudget } from './derive'
+import { deriveFinance, deriveBudget, budgetItemMonth } from './derive'
 import { deriveDebts } from './deriveDebts'
 import { BUCKETS, CATS, CURRENT, MONTHS, SAVINGS_MONTHS, GOAL_COLORS, ymIndex, ymFromIndex } from '../lib/constants'
 import { monthLabel, monthFull, today, uid } from '../lib/format'
@@ -74,7 +74,7 @@ export default function Dashboard() {
   )
   // months that already have a plan you could copy from (excluding the one open)
   const budgetSourceMonths = useMemo(() => {
-    const set = new Set(fin.budgetItems.map((it) => it.month || CURRENT))
+    const set = new Set(fin.budgetItems.map((it) => budgetItemMonth(it)))
     return Array.from(set).filter((m) => m !== budgetMonth).sort((a, b) => (a < b ? 1 : -1))
   }, [fin.budgetItems, budgetMonth])
 
@@ -182,7 +182,7 @@ export default function Dashboard() {
   // clone another month's plan into the month currently open
   const copyBudgetFrom = async (fromMonth) => {
     const ids = fin.budgetItems
-      .filter((it) => (it.month || CURRENT) === fromMonth)
+      .filter((it) => budgetItemMonth(it) === fromMonth)
       .sort((a, b) => (a.order || 0) - (b.order || 0))
       .map((it) => it.id)
     if (!ids.length) return
